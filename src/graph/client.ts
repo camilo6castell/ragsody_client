@@ -236,6 +236,9 @@ RULES:
 
 3. Voice
    - Reject phrasing that exposes the retrieval mechanism (e.g. "according to the provided context", "based on the retrieved sources") instead of naturally attributing the claim to its source.
+
+4. Language
+   - Reject if the answer is not in the same language as the original question.
 `
 
 export const HARD_MODE_RULES = `

@@ -1,6 +1,5 @@
 import { DEMO_MODE, askGeminiDemo, callDemoEndpointStream } from "./demo"
 import { buildRagGraph, buildInitialState } from "@/graph/graph"
-import { listProviderConfigs } from "./providers"
 import { postQuery } from "./api/client"
 import type { QueryResponse, WebSource } from "@/types/api"
 
@@ -44,14 +43,8 @@ export function detectSendMode(): SendMode {
     return _modeCache
   }
 
-  try {
-    listProviderConfigs()
-    _modeCache = "client_agent"
-    return _modeCache
-  } catch {
-    _modeCache = "demo_endpoint"
-    return _modeCache
-  }
+  _modeCache = "backend"
+  return _modeCache
 }
 
 export function resetModeCache(): void {
