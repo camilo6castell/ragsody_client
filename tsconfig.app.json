@@ -29,9 +29,6 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "@models/*": [
-        "../src/config/models/*"
       ]
     }
   },

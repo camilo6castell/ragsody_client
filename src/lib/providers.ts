@@ -1,13 +1,3 @@
-import {
-  supportsThinking,
-  defaultThink,
-  supportsMaxTokens,
-} from "./models"
-
-// ============================================================
-// Types
-// ============================================================
-
 export interface ProviderConfig {
   readonly name: string
   readonly backend: string
@@ -139,41 +129,6 @@ export function getProviderConfig(name: string): ProviderConfig {
 }
 
 // ============================================================
-// ProviderInfo builder (mirrors src/api/routers/config.py logic)
-// ============================================================
-
-export interface ProviderInfo {
-  name: string
-  model: string
-  supports: string[]
-  defaultThink: boolean | null
-}
-
-export function listProviderInfos(): Record<string, ProviderInfo> {
-  const configs = listProviderConfigs()
-  const infos: Record<string, ProviderInfo> = {}
-
-  for (const [role, config] of Object.entries(configs)) {
-    const supports: string[] = ["extra"]
-    if (supportsMaxTokens(config.capabilities, config.model)) {
-      supports.push("max_tokens")
-    }
-    if (supportsThinking(config.capabilities, config.model)) {
-      supports.push("think_mode")
-    }
-
-    infos[role] = {
-      name: role,
-      model: config.model,
-      supports,
-      defaultThink: defaultThink(config.capabilities, config.model),
-    }
-  }
-
-  return infos
-}
-
-// ============================================================
 // Cached client instances (per identity, not per role)
 // ============================================================
 
@@ -205,21 +160,4 @@ export function getClient(name: string): LLMClient {
   return client
 }
 
-// ============================================================
-// Convenience: role -> capabilities via models.ts
-// ============================================================
 
-export function roleSupportsThinking(role: string): boolean {
-  const config = getProviderConfig(role)
-  return supportsThinking(config.capabilities, config.model)
-}
-
-export function roleDefaultThink(role: string): boolean | null {
-  const config = getProviderConfig(role)
-  return defaultThink(config.capabilities, config.model)
-}
-
-export function roleSupportsMaxTokens(role: string): boolean {
-  const config = getProviderConfig(role)
-  return supportsMaxTokens(config.capabilities, config.model)
-}

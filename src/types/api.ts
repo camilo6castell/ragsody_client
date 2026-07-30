@@ -62,6 +62,10 @@ export interface ProviderInfo {
    * ResponseModeSection arranca reflejando esto, no un false fijo.
    */
   default_think: boolean | null
+  /** Ventana de contexto máximo del modelo (tokens de entrada). */
+  context_window: number | null
+  /** Máximo de tokens de salida configurado por defecto. */
+  max_tokens: number | null
 }
 
 export interface ProvidersResponse {
