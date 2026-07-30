@@ -37,6 +37,7 @@ function useFrostMelt(
     const events = ["pointermove", "pointerdown"] as const;
 
     function forward(e: Event) {
+      if (!e.isTrusted) return;
       const pe = e as PointerEvent;
       frostRoot!.dispatchEvent(
         new PointerEvent(pe.type, {
