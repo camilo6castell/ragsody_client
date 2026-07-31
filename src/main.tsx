@@ -9,9 +9,9 @@ import { applyTheme, type Theme } from "./stores/uiStore"
 // Aplica el theme persistido (o "system" si es la primera visita) ANTES
 // del primer render, leyendo directo de localStorage en vez de esperar
 // a que zustand/persist hidrate -- si no, hay un flash del tema
-// contrario mientras React monta. Misma key que uiStore ("myassistant-ui").
+// contrario mientras React monta. Misma key que uiStore ("ragsody-ui").
 try {
-  const raw = localStorage.getItem("myassistant-ui")
+  const raw = localStorage.getItem("ragsody-ui")
   const theme: Theme = raw ? (JSON.parse(raw).state?.theme ?? "system") : "system"
   applyTheme(theme)
 } catch {

@@ -115,7 +115,7 @@ export function AppShell() {
 
         <div className="flex min-w-0 items-center gap-1.5">
           <span className="truncate text-sm font-semibold tracking-tight">
-            My assistant
+            Ragsody
           </span>
         </div>
 

@@ -162,7 +162,7 @@ export const useConversationsStore = create<ConversationsState>()(
         })),
     }),
     {
-      name: "myassistant-conversations",
+      name: "ragsody-conversations",
       // Conversaciones guardadas en localStorage ANTES de agregar
       // useWebSearch no tienen ese campo -- sin este merge, quedarían en
       // `undefined` en vez de `false` (Conversation lo declara como

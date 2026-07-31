@@ -82,7 +82,7 @@ export const useUiStore = create<UiState>()(
       closeMobileSidebars: () => set({ leftMobileOpen: false, rightMobileOpen: false }),
     }),
     {
-      name: "myassistant-ui",
+      name: "ragsody-ui",
       // leftMobileOpen/rightMobileOpen quedan afuera a propósito -- ver
       // el comentario en la interfaz de arriba.
       partialize: (state) => ({

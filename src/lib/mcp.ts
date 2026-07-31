@@ -74,7 +74,7 @@ async function _getClient(): Promise<Client> {
   })
 
   _client = new Client(
-    { name: "myassistant-rag-ui", version: "1.0.0" },
+    { name: "ragsody-ui", version: "1.0.0" },
     { capabilities: {} },
   )
 

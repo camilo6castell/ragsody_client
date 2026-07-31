@@ -132,7 +132,7 @@ function WelcomeStep({
         </div>
         <div className="min-w-0 space-y-1">
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            MyAssistant RAG — demo
+            Ragsody RAG — demo
           </h2>
           <p className="text-xs leading-relaxed text-muted-foreground">
             A RAG assistant designed for home and business use: ask questions
