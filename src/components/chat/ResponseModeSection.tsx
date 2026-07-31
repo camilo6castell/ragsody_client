@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { Brain, FlaskConical, Globe, Atom } from "lucide-react"
 import { listModels } from "@/config/models/registry"
 import { getServerGenerationModel } from "@/lib/api/client"
@@ -9,6 +10,14 @@ import {
   getModelSupports,
   hasFullAgentConfig,
 } from "@/lib/providers"
+import {
+  SelectContent,
+  SelectGroup,
+  SelectGroupLabel,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { useConversationsStore } from "@/stores/conversationsStore"
 import type { Conversation } from "@/types/chat"
@@ -147,34 +156,41 @@ export function ResponseModeSection({
             Model
           </span>
           {agentActive ? (
-            <select
+            <SelectPrimitive.Root
               value={conversation.generation.model ?? "built-in"}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 setGeneration(conversation.id, {
-                  model: e.target.value === "built-in" ? null : e.target.value,
+                  model: value === "built-in" ? null : value,
                 })
               }
-              className="w-full cursor-pointer rounded-xl border border-border/60 bg-overlay/50 px-2.5 py-2 text-xs font-medium text-foreground outline-none transition-colors hover:border-border focus:border-primary/50"
             >
-              <option value="built-in">built-in</option>
-              {[...modelsByBackend.entries()].map(([backend, modelNames]) => (
-                <optgroup key={backend} label={backend}>
-                  {modelNames.map((model) => (
-                    <option key={`${backend},${model}`} value={`${backend},${model}`}>
-                      {model}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="built-in">built-in</SelectItem>
+                {[...modelsByBackend.entries()].map(([backend, modelNames]) => (
+                  <SelectGroup key={backend}>
+                    <SelectGroupLabel>{backend}</SelectGroupLabel>
+                    {modelNames.map((model) => (
+                      <SelectItem key={`${backend},${model}`} value={`${backend},${model}`}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </SelectPrimitive.Root>
           ) : (
-            <select
+            <SelectPrimitive.Root
+              value="server"
               disabled
-              title="In backend mode the server decides which model to use."
-              className="w-full cursor-not-allowed rounded-xl border border-border/30 bg-overlay/30 px-2.5 py-2 text-xs font-medium text-muted-foreground/60 outline-none"
+              items={{ server: `server: ${serverModel || "…"}` }}
             >
-              <option>server: {serverModel || "…"}</option>
-            </select>
+              <SelectTrigger title="In backend mode the server decides which model to use.">
+                <SelectValue />
+              </SelectTrigger>
+            </SelectPrimitive.Root>
           )}
         </div>
       )}
