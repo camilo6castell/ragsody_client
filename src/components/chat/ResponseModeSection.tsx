@@ -57,6 +57,19 @@ type Enhancement = {
   variant?: "gradient"
 }
 
+function SelectedModelDisplay({ value }: { value: string }) {
+  const comma = value.indexOf(",")
+  if (value === "built-in" || comma === -1) {
+    return <span className="truncate">{value}</span>
+  }
+  return (
+    <span className="truncate">
+      <strong className="font-semibold">{value.slice(0, comma)}</strong>
+      <span>: {value.slice(comma + 1)}</span>
+    </span>
+  )
+}
+
 export function ResponseModeSection({
   conversation,
 }: {
@@ -165,7 +178,7 @@ export function ResponseModeSection({
               }
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectedModelDisplay value={conversation.generation.model ?? "built-in"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="built-in">built-in</SelectItem>

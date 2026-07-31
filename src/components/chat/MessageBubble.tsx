@@ -13,7 +13,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import { ThinkingOrb } from "thinking-orbs";
-import { cn } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 import type { ChatMessage } from "@/types/chat";
 
 /**
@@ -32,12 +32,10 @@ function CopyButton({
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(getText());
+    const ok = await copyToClipboard(getText());
+    if (ok) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard API can fail (permissions, insecure context)
     }
   }
 
