@@ -11,8 +11,7 @@ import {
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ResponseModeSection } from "@/components/chat/ResponseModeSection";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useProviders } from "@/hooks/useProviders";
+
 import { cn } from "@/lib/utils";
 import { useConversationsStore } from "@/stores/conversationsStore";
 import { useUiStore } from "@/stores/uiStore";
@@ -40,8 +39,6 @@ export function Sidebar() {
   const toggleLeftCollapsed = useUiStore((s) => s.toggleLeftCollapsed);
   const leftMobileOpen = useUiStore((s) => s.leftMobileOpen);
   const closeMobileSidebars = useUiStore((s) => s.closeMobileSidebars);
-
-  const { data: providersData, isLoading: providersLoading } = useProviders();
 
   function handleNewConversation() {
     const id = createConversation();
@@ -233,22 +230,8 @@ export function Sidebar() {
       <section className="flex h-[fit-content] max-h-[50%] min-h-0 flex-col pt-3">
         <SidebarSectionHeader icon={Settings2} label="Generation" />
         <div className="h-[fit-content] max-h-full min-h-0 overflow-y-auto pb-4">
-          {activeConversation && providersLoading ? (
-            <div className="space-y-4 px-4">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-4 w-20" />
-              <div className="grid grid-cols-3 gap-1.5">
-                <Skeleton className="h-14 w-full" />
-                <Skeleton className="h-14 w-full" />
-                <Skeleton className="h-14 w-full" />
-              </div>
-            </div>
-          ) : activeConversation ? (
-            <ResponseModeSection
-              conversation={activeConversation}
-              providers={providersData}
-            />
+          {activeConversation ? (
+            <ResponseModeSection conversation={activeConversation} />
           ) : (
             <p className="px-4 py-4 text-center text-xs text-muted-foreground/60">
               Pick or create a conversation to configure the response mode.

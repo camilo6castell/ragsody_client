@@ -1,9 +1,8 @@
-import { Brain, FlaskConical, Globe, Cpu } from "lucide-react"
+import { Brain, FlaskConical, Globe, Cpu, Atom } from "lucide-react"
 import { DEMO_MODE, DEMO_MODE_EXPLANATION } from "@/lib/demo"
-import { detectSendMode } from "@/lib/sendMessage"
+import { getSupports, getDefaultThink, hasFullAgentConfig } from "@/lib/providers"
 import { cn } from "@/lib/utils"
 import { useConversationsStore } from "@/stores/conversationsStore"
-import type { ProvidersResponse } from "@/types/api"
 import type { Conversation } from "@/types/chat"
 
 const WEB_SEARCH_EXPLANATION =
@@ -21,8 +20,17 @@ const WEB_SEARCH_QUOTA_EXCEEDED_EXPLANATION =
   "The Tavily account's quota ran out (free tier or another plan). Check " +
   "your plan at https://app.tavily.com, or wait for the next billing cycle."
 
+const AGENT_EXPLANATION_ACTIVE =
+  "Full agent pipeline (in-browser): retrieves via MCP, reformulates low-confidence " +
+  "queries, generates the answer, reviews it for quality, and corrects if needed."
+
+const AGENT_EXPLANATION_UNAVAILABLE =
+  "The in-browser agent is not available because the LLM roles (generate, reformulate, " +
+  "review) are not fully configured in the .env file. Set VITE_LLM_ROL_GENERATE, " +
+  "VITE_LLM_ROL_REFORMULATE, and VITE_LLM_ROL_REVIEW to enable it."
+
 type Enhancement = {
-  key: "web" | "think" | "demo"
+  key: "web" | "think" | "agent" | "demo"
   label: string
   icon: typeof Globe
   active: boolean
@@ -34,38 +42,33 @@ type Enhancement = {
 
 export function ResponseModeSection({
   conversation,
-  providers,
 }: {
   conversation: Conversation
-  providers: ProvidersResponse | undefined
 }) {
-  const currentMode = detectSendMode()
   const setMode = useConversationsStore((s) => s.setMode)
   const setGeneration = useConversationsStore((s) => s.setGeneration)
+  const setUseAgent = useConversationsStore((s) => s.setUseAgent)
   const setUseWebSearch = useConversationsStore((s) => s.setUseWebSearch)
   const webSearchQuotaExceeded = useConversationsStore((s) => s.webSearchQuotaExceeded)
   const setWebSearchQuotaExceeded = useConversationsStore((s) => s.setWebSearchQuotaExceeded)
 
-  const activeProvider = providers
-    ? providers.providers[providers.active_generation_provider]
-    : undefined
-  const supportsThinkMode = activeProvider?.supports?.includes("think_mode") ?? false
-  const effectiveThink = conversation.generation.thinkMode ?? activeProvider?.default_think ?? false
+  const supportsThinkMode = getSupports("generate").has("think_mode")
+  const effectiveThink = conversation.generation.thinkMode ?? getDefaultThink("generate") ?? false
+  const agentConfigured = hasFullAgentConfig()
+  const agentActive = !DEMO_MODE && conversation.useAgent && agentConfigured
 
   const enhancements: Enhancement[] = [
     {
       key: "web",
       label: "Web",
       icon: Globe,
-      active: !DEMO_MODE && currentMode !== "client_agent" && conversation.useWebSearch,
-      disabled: DEMO_MODE || currentMode === "client_agent" || webSearchQuotaExceeded,
+      active: !DEMO_MODE && conversation.useWebSearch,
+      disabled: DEMO_MODE || webSearchQuotaExceeded,
       title: DEMO_MODE
         ? DEMO_MODE_EXPLANATION
-        : currentMode === "client_agent"
-          ? "Web search is not available when the in-browser agent is active."
-          : webSearchQuotaExceeded
-            ? WEB_SEARCH_QUOTA_EXCEEDED_EXPLANATION
-            : WEB_SEARCH_EXPLANATION,
+        : webSearchQuotaExceeded
+          ? WEB_SEARCH_QUOTA_EXCEEDED_EXPLANATION
+          : WEB_SEARCH_EXPLANATION,
       onToggle: () => setUseWebSearch(conversation.id, !conversation.useWebSearch),
     },
     {
@@ -78,8 +81,21 @@ export function ResponseModeSection({
         ? DEMO_MODE_EXPLANATION
         : supportsThinkMode
           ? THINK_EXPLANATION
-          : `The active model (${activeProvider?.model ?? "no provider"}) doesn't have reasoning mode configured.`,
+          : "The active model doesn't have reasoning mode configured.",
       onToggle: () => setGeneration(conversation.id, { thinkMode: !effectiveThink }),
+    },
+    {
+      key: "agent",
+      label: "Agent",
+      icon: Atom,
+      active: agentActive,
+      disabled: DEMO_MODE || !agentConfigured,
+      title: DEMO_MODE
+        ? DEMO_MODE_EXPLANATION
+        : agentConfigured
+          ? AGENT_EXPLANATION_ACTIVE
+          : AGENT_EXPLANATION_UNAVAILABLE,
+      onToggle: () => setUseAgent(conversation.id, !conversation.useAgent),
     },
     ...(DEMO_MODE
       ? [
@@ -128,9 +144,9 @@ export function ResponseModeSection({
         <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-overlay/30 px-2.5 py-1.5">
           <Cpu className="size-3 text-muted-foreground/60" />
           <span className="text-[11px] text-muted-foreground/70">
-            {currentMode === "client_agent"
+            {agentActive
               ? "Full agent pipeline (in-browser)"
-              : "Simple pipeline (backend streaming)"}
+              : "Simple pipeline (backend)"}
           </span>
         </div>
       )}
@@ -140,7 +156,7 @@ export function ResponseModeSection({
         <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
           Enhancements
         </span>
-        <div className={cn("grid gap-1.5", DEMO_MODE ? "grid-cols-3" : "grid-cols-2")}>
+        <div className={cn("grid gap-1.5", DEMO_MODE ? "grid-cols-3" : "grid-cols-3")}>
           {enhancements.map(({ key, label, icon: Icon, active, disabled, title, onToggle, variant }) => (
             <button
               key={key}
@@ -181,10 +197,6 @@ export function ResponseModeSection({
             Renewed already? Retry
           </button>
         </p>
-      )}
-
-      {!DEMO_MODE && !activeProvider && (
-        <p className="text-xs text-muted-foreground/60">Couldn't determine the active provider.</p>
       )}
     </div>
   )

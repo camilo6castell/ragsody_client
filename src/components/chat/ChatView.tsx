@@ -66,7 +66,7 @@ export function ChatView() {
   async function handleSend(text: string) {
     if (!conversation || isSending) return;
     setIsSending(true);
-    const mode = detectSendMode();
+    const mode = detectSendMode(conversation.useAgent);
 
     const userMsg: ChatMessage = {
       id: nanoid(),
@@ -98,6 +98,7 @@ export function ChatView() {
         thinkMode: conversation.generation.thinkMode,
       },
       webSearch: conversation.useWebSearch,
+      useAgent: conversation.useAgent,
     };
 
     if (mode === "demo_endpoint") {

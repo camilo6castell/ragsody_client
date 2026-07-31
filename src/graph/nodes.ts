@@ -1,5 +1,5 @@
-import { retrieveChunks } from "@/lib/mcp"
-import { callLLM, buildMessages, buildPrompt, buildReviewPrompt, buildCorrectionPrompt, formatContextChunks, REFORMULATION_SYSTEM_PROMPT, REVIEW_SYSTEM_PROMPT } from "./client"
+import { retrieveChunks, searchWeb } from "@/lib/mcp"
+import { callLLM, buildMessages, buildPrompt, buildReviewPrompt, buildCorrectionPrompt, formatContextChunks, formatWebChunks, REFORMULATION_SYSTEM_PROMPT, REVIEW_SYSTEM_PROMPT } from "./client"
 import type { RAGState } from "./state"
 
 // ======================================================
@@ -9,7 +9,7 @@ import type { RAGState } from "./state"
 export async function retrieveNode(state: RAGState): Promise<Partial<RAGState>> {
   const result = await retrieveChunks(state.question, state.collections, state.mode)
 
-  return {
+  const partial: Partial<RAGState> = {
     results: result.results.map((r) => ({
       text: r.text,
       source: r.source,
@@ -19,6 +19,22 @@ export async function retrieveNode(state: RAGState): Promise<Partial<RAGState>> 
     })),
     confidence: result.confidence,
   }
+
+  if (state.webSearch && !state.reformulated) {
+    try {
+      const webOutcome = await searchWeb(state.question)
+      if (webOutcome.status === "ok" && webOutcome.results.length > 0) {
+        partial.webResults = webOutcome.results
+        partial.usedWebSearch = true
+      } else if (webOutcome.status === "quota_exceeded") {
+        partial.webSearchQuotaExceeded = true
+      }
+    } catch {
+      /* web search failures are non-fatal */
+    }
+  }
+
+  return partial
 }
 
 // ======================================================
@@ -77,12 +93,14 @@ export async function reformulateNode(state: RAGState): Promise<Partial<RAGState
 // ======================================================
 
 export async function generateNode(state: RAGState): Promise<Partial<RAGState>> {
-  if (state.results.length === 0) {
+  if (state.results.length === 0 && state.webResults.length === 0) {
     return { answer: "No relevant context was found for your question." }
   }
 
   const contextChunks = formatContextChunks(state.results)
-  const prompt = buildPrompt(contextChunks, state.question, state.mode)
+  const webChunks = formatWebChunks(state.webResults)
+  const allChunks = [...contextChunks, ...webChunks]
+  const prompt = buildPrompt(allChunks, state.question, state.mode)
   const messages = buildMessages(prompt, [])
 
   const answer = await callLLM("generate", messages, {
@@ -100,6 +118,10 @@ export async function generateNode(state: RAGState): Promise<Partial<RAGState>> 
 
 const MAX_REVIEW_ATTEMPTS = 1
 
+function _allContextChunks(state: RAGState): string[] {
+  return [...formatContextChunks(state.results), ...formatWebChunks(state.webResults)]
+}
+
 export async function reviewNode(state: RAGState): Promise<Partial<RAGState>> {
   const attempts = state.review_attempts ?? 0
 
@@ -107,7 +129,7 @@ export async function reviewNode(state: RAGState): Promise<Partial<RAGState>> {
     return { review_passed: true, review_feedback: "" }
   }
 
-  const contextChunks = formatContextChunks(state.results)
+  const contextChunks = _allContextChunks(state)
   const reviewPrompt = buildReviewPrompt(contextChunks, state.question, state.answer)
   const messages = buildMessages(reviewPrompt, [], REVIEW_SYSTEM_PROMPT)
 
@@ -146,7 +168,7 @@ export function routeAfterReview(state: RAGState): "end" | "correct" {
 // ======================================================
 
 export async function correctNode(state: RAGState): Promise<Partial<RAGState>> {
-  const contextChunks = formatContextChunks(state.results)
+  const contextChunks = _allContextChunks(state)
   const correctionPrompt = buildCorrectionPrompt(
     contextChunks,
     state.question,

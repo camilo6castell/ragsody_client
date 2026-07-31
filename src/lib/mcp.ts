@@ -26,6 +26,17 @@ export interface RetrieveResult {
   collections_used: string[]
 }
 
+export interface WebSearchResult {
+  title: string
+  url: string
+  content: string
+}
+
+export interface WebSearchOutcome {
+  results: WebSearchResult[]
+  status: "ok" | "quota_exceeded" | "error"
+}
+
 // ============================================================
 // Internal state
 // ============================================================
@@ -120,6 +131,25 @@ export async function retrieveChunks(
       arguments: { query, collections, mode },
     })
     return JSON.parse(_extractText(result)) as RetrieveResult
+  } catch (err) {
+    _connected = false
+    throw err
+  }
+}
+
+export async function searchWeb(
+  query: string,
+  maxResults?: number,
+): Promise<WebSearchOutcome> {
+  const client = await _getClient()
+  const args: Record<string, unknown> = { query }
+  if (maxResults != null) args.max_results = maxResults
+  try {
+    const result = await client.callTool({
+      name: "search_web",
+      arguments: args,
+    })
+    return JSON.parse(_extractText(result)) as WebSearchOutcome
   } catch (err) {
     _connected = false
     throw err

@@ -12,6 +12,10 @@ export interface RAGState {
   max_tokens: number | null
   think_mode: boolean | null
   extra: Record<string, unknown> | null
+  webSearch: boolean
+  webResults: WebSearchResult[]
+  usedWebSearch: boolean
+  webSearchQuotaExceeded: boolean
 }
 
 export type RAGStateUpdate = Partial<RAGState>
@@ -22,4 +26,10 @@ export interface RetrieveChunk {
   collection: string
   page: number
   score: number
+}
+
+export interface WebSearchResult {
+  title: string
+  url: string
+  content: string
 }

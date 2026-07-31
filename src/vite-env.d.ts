@@ -11,6 +11,21 @@ interface ImportMetaEnv {
   /** MCP server connection -- see src/lib/mcp.ts. */
   readonly VITE_MCP_BASE_URL?: string
   readonly VITE_MCP_BEARER_TOKEN?: string
+
+  // ============================================================
+  // LLM provider configuration -- see src/lib/providers.ts
+  // ============================================================
+
+  /** Backend URLs (backend = concrete runtime). */
+  readonly VITE_LLM_FLM_URL?: string
+  readonly VITE_LLM_OLLAMA_URL?: string
+  readonly VITE_LLM_GEMINI_URL?: string
+
+  /** Role -> backend,model for each pipeline role. */
+  readonly VITE_LLM_ROL_GENERATE?: string
+  readonly VITE_LLM_ROL_REFORMULATE?: string
+  readonly VITE_LLM_ROL_REVIEW?: string
+  readonly VITE_LLM_ROL_SUPPLEMENT?: string
 }
 
 interface ImportMeta {

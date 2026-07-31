@@ -1,5 +1,5 @@
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph"
-import type { RAGState, RetrieveChunk } from "./state"
+import type { RAGState, RetrieveChunk, WebSearchResult } from "./state"
 import {
   retrieveNode,
   evaluateNode,
@@ -29,6 +29,10 @@ const StateAnnotation = Annotation.Root({
   max_tokens: Annotation<number | null>({ reducer: (_, b) => b, default: () => null }),
   think_mode: Annotation<boolean | null>({ reducer: (_, b) => b, default: () => null }),
   extra: Annotation<Record<string, unknown> | null>({ reducer: (_, b) => b, default: () => null }),
+  webSearch: Annotation<boolean>({ reducer: (_, b) => b, default: () => false }),
+  webResults: Annotation<WebSearchResult[]>({ reducer: (_, b) => b, default: () => [] }),
+  usedWebSearch: Annotation<boolean>({ reducer: (_, b) => b, default: () => false }),
+  webSearchQuotaExceeded: Annotation<boolean>({ reducer: (_, b) => b, default: () => false }),
 })
 
 // ======================================================
@@ -81,6 +85,10 @@ export function buildInitialState(overrides: Partial<RAGState>): RAGState {
     max_tokens: null,
     think_mode: null,
     extra: null,
+    webSearch: false,
+    webResults: [],
+    usedWebSearch: false,
+    webSearchQuotaExceeded: false,
     ...overrides,
   }
 }

@@ -6,7 +6,6 @@ import type {
   DeleteResponse,
   EphemeralFilesResponse,
   FileUploadResponse,
-  ProvidersResponse,
   QueryRequest,
   QueryResponse,
 } from "@/types/api"
@@ -105,11 +104,6 @@ export function getContextLimitDetail(error: unknown): ContextLimitExceededDetai
 
 export async function getCollections(): Promise<CollectionsResponse> {
   const { data } = await api.get<CollectionsResponse>("/collections")
-  return data
-}
-
-export async function getProviders(): Promise<ProvidersResponse> {
-  const { data } = await api.get<ProvidersResponse>("/config/providers")
   return data
 }
 

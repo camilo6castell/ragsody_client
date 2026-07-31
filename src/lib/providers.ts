@@ -1,3 +1,10 @@
+import {
+  getSupports as _getModelSupports,
+  getContextWindow as _getModelContextWindow,
+  getMaxTokens as _getModelMaxTokens,
+  getDefaultThink as _getModelDefaultThink,
+} from "@/config/models/registry"
+
 export interface ProviderConfig {
   readonly name: string
   readonly backend: string
@@ -5,6 +12,8 @@ export interface ProviderConfig {
   readonly apiKey: string
   readonly model: string
   readonly client: string
+  /** Key in src/config/models/ — which backend module to consult
+   *  for model capabilities. Matches 1:1 with `backend`. */
   readonly capabilities: string
 }
 
@@ -158,6 +167,53 @@ export function getClient(name: string): LLMClient {
     _clientCache.set(key, client)
   }
   return client
+}
+
+// ============================================================
+// Agent readiness check
+// ============================================================
+
+const _AGENT_ROLES = ["generate", "reformulate", "review"] as const
+
+/** True when every role required by the in-browser agent has a backend,model configured in .env. */
+export function hasFullAgentConfig(): boolean {
+  for (const role of _AGENT_ROLES) {
+    const envKey = _ENV_ROLE_MAP[role]
+    if (!envKey) return false
+    const raw = import.meta.env[envKey] ?? ""
+    if (!raw) return false
+    const parts = raw.split(",")
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return false
+  }
+  return true
+}
+
+// ============================================================
+// Model capabilities from models.json
+// ============================================================
+
+/** Returns the set of supported capability names for the model used by `role`. */
+export function getSupports(roleName: string): Set<string> {
+  const config = getProviderConfig(roleName)
+  return _getModelSupports(config.capabilities, config.model)
+}
+
+/** Returns the default think mode for the model used by `role`, or null if unsupported. */
+export function getDefaultThink(roleName: string): boolean | null {
+  const config = getProviderConfig(roleName)
+  return _getModelDefaultThink(config.capabilities, config.model)
+}
+
+/** Returns the context window size for the model used by `role`, or null if unknown. */
+export function getContextWindow(roleName: string): number | null {
+  const config = getProviderConfig(roleName)
+  return _getModelContextWindow(config.capabilities, config.model)
+}
+
+/** Returns the configured max output tokens for the model used by `role`, or null if no preset limit. */
+export function getMaxTokens(roleName: string): number | null {
+  const config = getProviderConfig(roleName)
+  return _getModelMaxTokens(config.capabilities, config.model)
 }
 
 

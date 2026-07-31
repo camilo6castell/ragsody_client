@@ -1,5 +1,7 @@
 import { getProviderConfig } from "@/lib/providers"
 import type { ProviderConfig } from "@/lib/providers"
+import { getBackendData } from "@/config/models/registry"
+import type { ModelEntry } from "@/config/models/types"
 
 export interface ChatTurn {
   role: "system" | "user" | "assistant"
@@ -7,19 +9,75 @@ export interface ChatTurn {
 }
 
 // ============================================================
+// Model lookup helper
+// ============================================================
+
+function _getModelEntry(capabilities: string, modelName: string): ModelEntry | null {
+  try {
+    const backend = getBackendData(capabilities) as Record<string, ModelEntry>
+    return backend[modelName] ?? null
+  } catch {
+    return null
+  }
+}
+
+function _deepClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value))
+}
+
+// ============================================================
 // OpenAI-compatible
 // ============================================================
+
+function _mergeOpenAiKwargs(
+  body: Record<string, unknown>,
+  modelEntry: ModelEntry,
+  opts?: LLMOptions,
+): void {
+  for (const [key, val] of Object.entries(modelEntry.kwargs)) {
+    if (key !== "timeout" && key !== "model" && key !== "messages") {
+      body[key] = val !== undefined ? _deepClone(val) : val
+    }
+  }
+
+  if (opts?.maxTokens != null) {
+    body.max_tokens = opts.maxTokens
+  }
+
+  if (opts?.thinkMode != null) {
+    const extraBody = (body.extra_body as Record<string, unknown>) ?? {}
+    if ("enable_thinking" in extraBody) {
+      extraBody.enable_thinking = opts.thinkMode
+    }
+    const chatKwargs = extraBody.chat_template_kwargs
+    if (chatKwargs && typeof chatKwargs === "object" && "enable_thinking" in chatKwargs) {
+      chatKwargs.enable_thinking = opts.thinkMode
+    }
+    body.extra_body = extraBody
+  }
+
+  if (opts?.extra) {
+    const extraBody = (body.extra_body as Record<string, unknown>) ?? {}
+    Object.assign(extraBody, opts.extra)
+    body.extra_body = extraBody
+  }
+}
 
 async function _callOpenAICompat(
   config: ProviderConfig,
   messages: ChatTurn[],
-  signal?: AbortSignal,
+  opts?: LLMOptions,
 ): Promise<string | null> {
   const url = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`
 
   const body: Record<string, unknown> = {
     model: config.model,
     messages,
+  }
+
+  const modelEntry = _getModelEntry(config.capabilities, config.model)
+  if (modelEntry) {
+    _mergeOpenAiKwargs(body, modelEntry, opts)
   }
 
   const headers: Record<string, string> = {
@@ -33,7 +91,7 @@ async function _callOpenAICompat(
     method: "POST",
     headers,
     body: JSON.stringify(body),
-    signal,
+    signal: opts?.signal,
   })
 
   if (!response.ok) {
@@ -57,14 +115,34 @@ interface OllamaChatResponse {
   done?: boolean
 }
 
+function _mergeOllamaKwargs(
+  options: Record<string, unknown>,
+  modelEntry: ModelEntry,
+  opts?: LLMOptions,
+): void {
+  const modelOptions = modelEntry.kwargs.options
+  if (modelOptions && typeof modelOptions === "object") {
+    Object.assign(options, _deepClone(modelOptions))
+  }
+
+  const ctx = modelEntry.context_window
+  if (ctx != null) {
+    options.num_ctx = ctx
+  }
+
+  if (opts?.maxTokens != null) {
+    options.num_predict = opts.maxTokens
+  }
+}
+
 async function _callOllamaNative(
   config: ProviderConfig,
   messages: ChatTurn[],
-  signal?: AbortSignal,
+  opts?: LLMOptions,
 ): Promise<string | null> {
   const url = `${config.baseUrl.replace(/\/$/, "")}/api/chat`
 
-  const body = {
+  const body: Record<string, unknown> = {
     model: config.model,
     messages: messages.map((m) => ({
       role: m.role,
@@ -73,11 +151,24 @@ async function _callOllamaNative(
     stream: false,
   }
 
+  const modelEntry = _getModelEntry(config.capabilities, config.model)
+  if (modelEntry) {
+    const options: Record<string, unknown> = {}
+    _mergeOllamaKwargs(options, modelEntry, opts)
+    if (Object.keys(options).length > 0) {
+      body.options = options
+    }
+  }
+
+  if (opts?.thinkMode != null) {
+    body.think = opts.thinkMode
+  }
+
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-    signal,
+    signal: opts?.signal,
   })
 
   if (!response.ok) {
@@ -108,10 +199,10 @@ export async function callLLM(
   const config = getProviderConfig(providerName)
 
   if (config.client === "openai_compat") {
-    return _callOpenAICompat(config, messages, opts?.signal)
+    return _callOpenAICompat(config, messages, opts)
   }
   if (config.client === "ollama_native") {
-    return _callOllamaNative(config, messages, opts?.signal)
+    return _callOllamaNative(config, messages, opts)
   }
 
   throw new Error(`Unknown LLM client type: ${config.client}`)
@@ -265,6 +356,14 @@ export function formatContextChunks(
 ): string[] {
   return results.map(
     (r) => `SOURCE: ${r.source}\nCOLLECTION: ${r.collection}\nPAGE: ${r.page}\n\n${r.text}`,
+  )
+}
+
+export function formatWebChunks(
+  results: { title: string; url: string; content: string }[],
+): string[] {
+  return results.map(
+    (r) => `TITLE: ${r.title}\nURL: ${r.url}\n\n${r.content}`,
   )
 }
 

@@ -17,6 +17,8 @@ export interface SendMessageParams {
   conversationId?: string | null
   generation?: { maxTokens: number | null; thinkMode: boolean | null } | null
   webSearch: boolean
+  /** When true, the in-browser LangGraph agent runs instead of POST /query. */
+  useAgent?: boolean
 }
 
 export interface SendMessageResult {
@@ -33,22 +35,14 @@ export interface SendMessageResult {
 // Auto-detection
 // ============================================================
 
-let _modeCache: SendMode | null = null
-
-export function detectSendMode(): SendMode {
-  if (_modeCache) return _modeCache
-
-  if (DEMO_MODE) {
-    _modeCache = "demo"
-    return _modeCache
-  }
-
-  _modeCache = "backend"
-  return _modeCache
+export function detectSendMode(useAgent?: boolean): SendMode {
+  if (DEMO_MODE) return "demo"
+  if (useAgent) return "client_agent"
+  return "backend"
 }
 
 export function resetModeCache(): void {
-  _modeCache = null
+  /* kept for compatibility — no longer needed */
 }
 
 // ============================================================
@@ -64,6 +58,7 @@ async function runClientAgent(params: SendMessageParams): Promise<SendMessageRes
     mode: params.mode,
     max_tokens: params.generation?.maxTokens ?? null,
     think_mode: params.generation?.thinkMode ?? null,
+    webSearch: params.webSearch,
   })
 
   const finalState = await graph.invoke(initialState)
@@ -79,6 +74,14 @@ async function runClientAgent(params: SendMessageParams): Promise<SendMessageRes
     confidence: finalState.confidence,
     collectionsUsed: usedCollections,
     reformulated: finalState.reformulated,
+    usedWebSearch: finalState.usedWebSearch,
+    webSources: finalState.usedWebSearch
+      ? (finalState.webResults as { title: string; url: string }[] | undefined)?.map((r) => ({
+          title: r.title,
+          url: r.url,
+        })) ?? []
+      : undefined,
+    webSearchQuotaExceeded: finalState.webSearchQuotaExceeded,
   }
 }
 
@@ -131,7 +134,7 @@ export async function sendMessage(
   params: SendMessageParams,
   streamCallbacks?: StreamCallbacks,
 ): Promise<SendMessageResult | undefined> {
-  const mode = detectSendMode()
+  const mode = detectSendMode(params.useAgent)
 
   if (mode === "demo") {
     const result = await askGeminiDemo({
