@@ -3,7 +3,7 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { Brain, FlaskConical, Globe, Atom } from "lucide-react"
 import { listModels } from "@/config/models/registry"
 import { getServerGenerationModel } from "@/lib/api/client"
-import { DEMO_MODE, DEMO_MODE_EXPLANATION } from "@/lib/demo"
+import { DEMO_DISABLED_TITLE, DEMO_MODE, DEMO_MODE_EXPLANATION } from "@/lib/demo"
 import {
   effectiveGenerateModel,
   getModelDefaultThink,
@@ -71,8 +71,8 @@ export function ResponseModeSection({
 
   const agentConfigured = hasFullAgentConfig()
   const agentActive = !DEMO_MODE && conversation.useAgent && agentConfigured
-  // En modo backend el modelo lo decide el servidor, así que el override
-  // solo aplica al agente in-browser.
+  // In backend mode the server decides the model, so the override only
+  // applies to the in-browser agent.
   const modelOverride = agentActive ? conversation.generation.model : null
   const { backend: genBackend, model: genModel } = effectiveGenerateModel(modelOverride)
   const supportsThinkMode = getModelSupports(genBackend, genModel).has("think_mode")
@@ -100,7 +100,7 @@ export function ResponseModeSection({
       active: !DEMO_MODE && conversation.useWebSearch,
       disabled: DEMO_MODE || webSearchQuotaExceeded,
       title: DEMO_MODE
-        ? DEMO_MODE_EXPLANATION
+        ? DEMO_DISABLED_TITLE
         : webSearchQuotaExceeded
           ? WEB_SEARCH_QUOTA_EXCEEDED_EXPLANATION
           : WEB_SEARCH_EXPLANATION,
@@ -113,7 +113,7 @@ export function ResponseModeSection({
       active: !DEMO_MODE && effectiveThink,
       disabled: DEMO_MODE || !supportsThinkMode,
       title: DEMO_MODE
-        ? DEMO_MODE_EXPLANATION
+        ? DEMO_DISABLED_TITLE
         : supportsThinkMode
           ? THINK_EXPLANATION
           : "The active model doesn't have reasoning mode configured.",
@@ -126,7 +126,7 @@ export function ResponseModeSection({
       active: agentActive,
       disabled: DEMO_MODE || !agentConfigured,
       title: DEMO_MODE
-        ? DEMO_MODE_EXPLANATION
+        ? DEMO_DISABLED_TITLE
         : agentConfigured
           ? AGENT_EXPLANATION_ACTIVE
           : AGENT_EXPLANATION_UNAVAILABLE,
@@ -206,9 +206,12 @@ export function ResponseModeSection({
               key={m}
               type="button"
               onClick={() => setMode(conversation.id, m)}
+              disabled={DEMO_MODE}
               aria-pressed={conversation.mode === m}
+              title={DEMO_MODE ? DEMO_DISABLED_TITLE : undefined}
               className={cn(
                 "rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-150",
+                DEMO_MODE && "cursor-not-allowed opacity-50",
                 conversation.mode === m
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-overlay-hover hover:text-foreground"

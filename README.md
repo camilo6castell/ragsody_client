@@ -9,7 +9,7 @@ React frontend for RAGsody, a local RAG chat over locally-indexed document colle
   - *Agent mode*: an in-browser LangGraph pipeline (retrieve → evaluate → reformulate on low confidence → generate → review/correct) orchestrated through the MCP server (`/mcp`), including live web search (`search_web` tool) and a Think button.
   - *Backend mode*: delegates the whole query to the server's RAG pipeline; the server decides which model to use.
 - **Model selection** per conversation (Generation section): pick a backend+model (`flm`, `ollama`, `gemini`) to override the built-in role mapping, or use the backend's configured model.
-- **Demo mode** (`VITE_DEMO_MODE=true`): static deployment with no backend (see `src/lib/demo.ts`).
+- **Demo mode** (`VITE_DEMO_MODE=true`): static deployment with no backend (see `src/lib/demo.ts`). Boots into a blocking welcome screen: visitors can continue without an API key (whole UI visible but inert) or enter their own Google API key + Gemini model, stored only in React memory and never persisted or proxied through any backend — the browser calls Gemini directly.
 - Dark/light theme sync, resizable sidebar, persisted conversations (localStorage).
 
 ## Tech stack
@@ -61,5 +61,5 @@ See `.env.example` for the full annotated list. Key variables:
 | `VITE_MCP_BEARER_TOKEN` | Bearer token for MCP (must match server's `MCP_BEARER_TOKEN`) |
 | `VITE_LLM_FLM_URL` / `VITE_LLM_OLLAMA_URL` / `VITE_LLM_GEMINI_URL` | OpenAI-compatible endpoints for each backend runtime |
 | `VITE_LLM_ROL_*` | Role → `backend,model` mapping for the agent pipeline (GENERATE, REFORMULATE, REVIEW, SUPPLEMENT) |
-| `VITE_DEMO_MODE` | `true` for a backend-less static deployment |
-| `VITE_GEMINI_API_KEY` / `VITE_GEMINI_BASE_URL` / `VITE_GEMINI_MODEL` | Direct browser→Gemini config, only used in demo mode |
+| `VITE_DEMO_MODE` | `true` for a backend-less static deployment (blocking welcome screen, see `src/components/demo/DemoOnboarding.tsx`) |
+| `VITE_GEMINI_API_KEY` / `VITE_GEMINI_BASE_URL` / `VITE_GEMINI_MODEL` | Optional build-time fallbacks for demo mode; the welcome screen normally asks visitors for their own key/model (memory only) |

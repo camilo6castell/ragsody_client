@@ -2,6 +2,7 @@ import { FileCode2, Trash2, UploadCloud } from "lucide-react"
 import { useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { apiErrorMessage } from "@/lib/api/client"
+import { DEMO_DISABLED_TITLE } from "@/lib/demo"
 import type { useAttachments } from "@/hooks/useAttachments"
 
 const ACCEPTED_EXTENSIONS =
@@ -14,14 +15,18 @@ function formatSize(bytes: number): string {
 
 export function AttachmentsSection({
   attachments,
+  disabled,
 }: {
   attachments: ReturnType<typeof useAttachments>
+  /** Demo mode without an API key: attachments visible but inert. */
+  disabled?: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const fileCount = attachments.data?.files.length ?? 0
 
   function handlePickFile() {
+    if (disabled) return
     inputRef.current?.click()
   }
 
@@ -49,12 +54,20 @@ export function AttachmentsSection({
         variant="secondary"
         size="sm"
         className="w-full gap-1.5"
-        disabled={attachments.upload.isPending}
+        disabled={attachments.upload.isPending || disabled}
+        title={disabled ? DEMO_DISABLED_TITLE : undefined}
         onClick={handlePickFile}
       >
         <UploadCloud className="size-3.5" />
         {attachments.upload.isPending ? "Uploading..." : "Attach file"}
       </Button>
+
+      {disabled && (
+        <p className="rounded-lg border border-border/60 bg-overlay px-3 py-2.5 text-[11px] leading-relaxed text-muted-foreground/70">
+          Disabled in demo mode. Attached files are sent to Gemini with your
+          next question: set up an API key to try it.
+        </p>
+      )}
 
       {attachments.upload.isError && (
         <p className="text-xs text-destructive">

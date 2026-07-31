@@ -13,6 +13,7 @@ import {
   SYSTEM_COLLECTIONS_DEMO_EXPLANATION,
 } from "@/lib/demo";
 import { useConversationsStore } from "@/stores/conversationsStore";
+import { useDemoStore } from "@/stores/demoStore";
 import { useUiStore } from "@/stores/uiStore";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
 import { SidebarShell } from "./SidebarShell";
@@ -37,8 +38,10 @@ export function RightSidebar() {
   const ephemeralFiles = useEphemeralFiles(conversationId ?? null);
   const { data: collectionsData, isLoading: collectionsLoading } =
     useCollections();
+  const demoRoute = useDemoStore((s) => s.route);
 
   const attachmentCount = attachments.data?.files.length ?? 0;
+  const attachmentsDisabled = DEMO_MODE && demoRoute !== "with-key";
   const ephemeralCount = DEMO_MODE
     ? 0
     : (ephemeralFiles.data?.files.length ?? 0);
@@ -123,7 +126,10 @@ export function RightSidebar() {
               {attachments.isLoading ? (
                 <ListSkeleton />
               ) : (
-                <AttachmentsSection attachments={attachments} />
+                <AttachmentsSection
+                  attachments={attachments}
+                  disabled={attachmentsDisabled}
+                />
               )}
             </div>
           </section>

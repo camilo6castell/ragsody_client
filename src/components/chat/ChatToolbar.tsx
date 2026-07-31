@@ -1,5 +1,6 @@
 import type { Conversation } from "@/types/chat";
 import { DEMO_MODE } from "@/lib/demo";
+import { useDemoStore } from "@/stores/demoStore";
 import { ConnectionStatus } from "@/components/layout/ConnectionStatus";
 import { cn } from "@/lib/utils";
 import {
@@ -14,15 +15,24 @@ import {
  * competing with the textarea.
  */
 export function ChatToolbar({ conversation }: { conversation: Conversation }) {
+  const demoRoute = useDemoStore((s) => s.route);
+  const demoModel = useDemoStore((s) => s.model);
+
   const hasContextSource =
     conversation.activeCollections.length > 0 || conversation.useWebSearch;
 
   if (DEMO_MODE) {
+    const label =
+      demoRoute === "with-key"
+        ? `Demo · Gemini (${demoModel ?? "gemini"})`
+        : demoRoute === "no-key"
+          ? "Demo without an API key"
+          : "Demo mode";
     return (
       <div className="flex items-center justify-between gap-2 px-1">
         <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
           <span className="size-1.5 rounded-full bg-primary/60" />
-          Demo mode
+          {label}
         </span>
         <ConnectionStatus className="hidden sm:inline-flex" />
       </div>

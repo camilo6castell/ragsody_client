@@ -18,12 +18,19 @@ export interface SendMessageParams {
   generation?: {
     maxTokens: number | null
     thinkMode: boolean | null
-    /** Override "backend,model" del agente in-browser -- null = built-in (roles del .env). */
+    /** Override "backend,model" for the in-browser agent -- null = built-in (roles from .env). */
     model?: string | null
   } | null
   webSearch: boolean
   /** When true, the in-browser LangGraph agent runs instead of POST /query. */
   useAgent?: boolean
+  /** Raw text of attached files, already concatenated (demo mode). */
+  attachmentsContext?: string
+  /**
+   * User-provided demo credentials (onboarding modal, memory only).
+   * Overrides the VITE_GEMINI_* build-time fallbacks in demo.ts.
+   */
+  demo?: { apiKey: string; model: string }
 }
 
 export interface SendMessageResult {
@@ -146,6 +153,9 @@ export async function sendMessage(
     const result = await askGeminiDemo({
       question: params.question,
       history: params.chatHistory,
+      attachmentsContext: params.attachmentsContext,
+      apiKey: params.demo?.apiKey,
+      model: params.demo?.model,
     })
     return { content: result.answer }
   }

@@ -28,6 +28,15 @@
 
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true"
 
+/** Base URL of Gemini's OpenAI-compatible API, called directly from the browser. */
+export const GEMINI_BASE_URL =
+  import.meta.env.VITE_GEMINI_BASE_URL ??
+  "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+/** Tooltip title (hover) for any control disabled in demo mode. */
+export const DEMO_DISABLED_TITLE =
+  "Disabled in demo mode. Add a Google API key to try the chat, or explore the rest of the app to see how it works."
+
 export const DEMO_MODE_EXPLANATION =
   "Demo mode: this deployment has no backend, no GPU, and none of the " +
   "author's indexed collections -- all of that only runs on the author's " +
@@ -69,21 +78,27 @@ export interface DemoAnswer {
  * hitting a backend. Throws a plain Error with a message meant to be
  * shown as-is (see apiErrorMessage in lib/api/client.ts, which also
  * handles plain Errors for this reason).
+ *
+ * apiKey/model are the user-provided values from the onboarding modal
+ * (memory only -- see stores/demoStore.ts). When omitted they fall back
+ * to the build-time VITE_GEMINI_* env vars.
  */
 export async function askGeminiDemo(params: {
   question: string
   history: { user: string; assistant: string }[]
   /** Raw text content of any files attached to this message, already concatenated. */
   attachmentsContext?: string
+  apiKey?: string
+  model?: string
 }): Promise<DemoAnswer> {
-  const baseUrl = import.meta.env.VITE_GEMINI_BASE_URL
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
-  const model = import.meta.env.VITE_GEMINI_MODEL
+  const baseUrl = GEMINI_BASE_URL
+  const apiKey = params.apiKey ?? import.meta.env.VITE_GEMINI_API_KEY
+  const model = params.model ?? import.meta.env.VITE_GEMINI_MODEL
 
-  if (!baseUrl || !apiKey || !model) {
+  if (!apiKey || !model) {
     throw new Error(
-      "Demo mode is on but VITE_GEMINI_BASE_URL/VITE_GEMINI_API_KEY/VITE_GEMINI_MODEL " +
-        "aren't set at build time -- nothing to call.",
+      "Demo mode is on but no API key/model is available. Enter yours in the " +
+        "welcome screen, or set VITE_GEMINI_API_KEY/VITE_GEMINI_MODEL at build time.",
     )
   }
 
@@ -127,6 +142,57 @@ export async function askGeminiDemo(params: {
     throw new Error("Gemini's API returned an empty response.")
   }
   return { answer, isDemo: true }
+}
+
+/**
+ * Validates a user-entered Gemini API key + model against the OpenAI-
+ * compatible /models endpoint (GET {base}/models), called directly from
+ * the browser. Used by the onboarding modal before letting the user in:
+ * 401/403 -> invalid key, network error -> unreachable, model missing
+ * from the list -> wrong model name. Never touches any backend.
+ */
+export async function verifyGeminiModel(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const url = `${baseUrl.replace(/\/$/, "")}/models`
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${apiKey}` },
+    })
+  } catch {
+    return {
+      ok: false,
+      message: "Couldn't reach Google's API from the browser. Check your connection.",
+    }
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    return { ok: false, message: "The API key is invalid. Check it and try again." }
+  }
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: `Google's API returned ${response.status}. Try again in a few minutes.`,
+    }
+  }
+
+  const data = (await response.json().catch(() => null)) as {
+    data?: { id?: string }[]
+  } | null
+  const ids = data?.data?.map((m) => m.id).filter(Boolean) ?? []
+  if (ids.length > 0 && !ids.includes(model)) {
+    return {
+      ok: false,
+      message: `The model "${model}" doesn't exist or isn't available on your account. Check the name (e.g. gemini-2.5-flash).`,
+    }
+  }
+
+  return { ok: true }
 }
 
 /**

@@ -3,8 +3,11 @@ import { Menu, PanelRight } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { Blaze } from "@/components/canvasui/Blaze";
 import { Frost } from "@/components/canvasui/Frost";
+import { DemoOnboarding } from "@/components/demo/DemoOnboarding";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useThemeSync } from "@/hooks/useThemeSync";
+import { DEMO_MODE } from "@/lib/demo";
+import { useDemoStore } from "@/stores/demoStore";
 import { useUiStore } from "@/stores/uiStore";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { RightSidebar } from "./RightSidebar";
@@ -67,6 +70,11 @@ export function AppShell() {
 
   const openLeftMobile = useUiStore((s) => s.openLeftMobile);
   const openRightMobile = useUiStore((s) => s.openRightMobile);
+
+  // Only in builds with VITE_DEMO_MODE=true: blocks the whole UI until the
+  // user picks a route. DEMO_MODE is a build-time constant, so in regular
+  // builds this never renders (zero DOM overhead).
+  const demoRoute = useDemoStore((s) => s.route);
 
   const frostRef = useRef<HTMLDivElement>(null);
   useFrostMelt(frostRef, isDark);
@@ -133,6 +141,8 @@ export function AppShell() {
 
         <RightSidebar />
       </div>
+
+      {DEMO_MODE && demoRoute === null && <DemoOnboarding />}
     </div>
   );
 }

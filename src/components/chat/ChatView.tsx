@@ -7,6 +7,7 @@ import {
 } from "@/lib/api/client";
 import {
   DEMO_MODE,
+  buildAttachmentsContext,
   callDemoEndpointStream,
 } from "@/lib/demo";
 import {
@@ -15,8 +16,10 @@ import {
 } from "@/lib/sendMessage";
 import { useConversationsStore } from "@/stores/conversationsStore";
 import {
+  selectDemoFiles,
   useDemoAttachmentsStore,
 } from "@/stores/demoAttachmentsStore";
+import { useDemoStore } from "@/stores/demoStore";
 import type { ChatMessage } from "@/types/chat";
 import { MessageInput } from "./MessageInput";
 import { MessageList } from "./MessageList";
@@ -52,6 +55,10 @@ export function ChatView() {
     (s) => s.setWebSearchQuotaExceeded,
   );
   const clearDemoAttachments = useDemoAttachmentsStore((s) => s.clearFiles);
+  const demoRoute = useDemoStore((s) => s.route);
+  const demoApiKey = useDemoStore((s) => s.apiKey);
+  const demoModel = useDemoStore((s) => s.model);
+  const demoFiles = useDemoAttachmentsStore(selectDemoFiles(conversationId ?? null));
   const [isSending, setIsSending] = useState(false);
 
   if (!conversationId || !conversation) {
@@ -65,8 +72,16 @@ export function ChatView() {
 
   async function handleSend(text: string) {
     if (!conversation || isSending) return;
+    // In demo mode without an API key the input is already blocked
+    // (MessageInput locked); this is extra defense against a forced send.
+    if (DEMO_MODE && demoRoute !== "with-key") return;
     setIsSending(true);
     const mode = detectSendMode(conversation.useAgent);
+
+    const demo =
+      DEMO_MODE && demoRoute === "with-key" && demoApiKey && demoModel
+        ? { apiKey: demoApiKey, model: demoModel }
+        : undefined;
 
     const userMsg: ChatMessage = {
       id: nanoid(),
@@ -81,7 +96,12 @@ export function ChatView() {
       content: "",
       createdAt: Date.now(),
       isPending: true,
-      pendingLabel: mode === "demo_endpoint" ? "streaming response" : "compacting the response",
+      pendingLabel:
+        mode === "demo_endpoint"
+          ? "streaming response"
+          : mode === "demo"
+            ? "contacting Gemini..."
+            : "compacting the response",
     };
 
     addMessage(conversation.id, userMsg);
@@ -100,6 +120,11 @@ export function ChatView() {
       },
       webSearch: conversation.useWebSearch,
       useAgent: conversation.useAgent,
+      // Demo-mode attachments + credentials: the attached files' content goes
+      // with the next query straight to Gemini (never to any backend). `demo`
+      // stays undefined in any other configuration.
+      attachmentsContext: demo ? buildAttachmentsContext(demoFiles) : undefined,
+      demo,
     };
 
     if (mode === "demo_endpoint") {
@@ -188,6 +213,7 @@ export function ChatView() {
         conversation={conversation}
         onSend={handleSend}
         disabled={isSending}
+        locked={DEMO_MODE && demoRoute !== "with-key"}
       />
     </div>
   );
