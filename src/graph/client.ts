@@ -313,6 +313,7 @@ RULES:
 REQUIREMENTS:
 
 - Return only the rewritten question, self-contained and optimized for semantic retrieval.
+- Keep the entire reformulation in the same language as the user's question.
 - No preamble, no explanation, no markdown.
 `
 
@@ -435,7 +436,7 @@ Otherwise:
 
 {
   "passed": false,
-  "reason": "<grounding|missing_sources|exposed_retrieval_voice>",
+  "reason": "<grounding|missing_sources|exposed_retrieval_voice|language>",
   "feedback": "<concise explanation of the problem>"
 }
 
@@ -444,6 +445,7 @@ Reason values:
 - grounding
 - missing_sources
 - exposed_retrieval_voice
+- language
 
 Do not return markdown, explanations, comments, or any text outside the JSON object.
 `
