@@ -1,4 +1,4 @@
-import { Brain, FlaskConical, Globe, Cpu, Atom } from "lucide-react"
+import { Brain, FlaskConical, Globe, Atom } from "lucide-react"
 import { DEMO_MODE, DEMO_MODE_EXPLANATION } from "@/lib/demo"
 import { getSupports, getDefaultThink, hasFullAgentConfig } from "@/lib/providers"
 import { cn } from "@/lib/utils"
@@ -138,18 +138,6 @@ export function ResponseModeSection({
           ))}
         </div>
       </div>
-
-      {/* Pipeline indicator */}
-      {!DEMO_MODE && (
-        <div className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-overlay/30 px-2.5 py-1.5">
-          <Cpu className="size-3 text-muted-foreground/60" />
-          <span className="text-[11px] text-muted-foreground/70">
-            {agentActive
-              ? "Full agent pipeline (in-browser)"
-              : "Simple pipeline (backend)"}
-          </span>
-        </div>
-      )}
 
       {/* Enhancements -- compact cards */}
       <div className="space-y-2">

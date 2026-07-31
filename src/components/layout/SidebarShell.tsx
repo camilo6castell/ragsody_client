@@ -95,7 +95,7 @@ export function SidebarShell({
             >
               <LogoIcon className="size-5 shrink-0" />
               <span className="text-sm font-semibold tracking-tight text-foreground">
-                My assistant
+                Ragsody
               </span>
             </a>
           )}

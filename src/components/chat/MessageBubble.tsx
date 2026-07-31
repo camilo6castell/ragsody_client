@@ -94,10 +94,11 @@ function extractText(node: React.ReactNode): string {
 /**
  * Metadata footer for assistant messages. Collapsible to reduce visual
  * noise -- expanded by default for the latest message, collapsed for
- * older ones.
+ * older ones. Timestamp is rendered in the same row, at the right edge.
  */
 function MessageMetadata({ message }: { message: ChatMessage }) {
   const [expanded, setExpanded] = useState(false);
+  const timestamp = formatTime(message.createdAt);
 
   const hasMetadata =
     message.confidence !== undefined ||
@@ -105,22 +106,31 @@ function MessageMetadata({ message }: { message: ChatMessage }) {
     message.usedWebSearch ||
     message.reformulated;
 
-  if (!hasMetadata) return null;
+  if (!hasMetadata) {
+    return (
+      <div className="mt-2 flex justify-end">
+        <span className="text-[10px] text-muted-foreground/50">{timestamp}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-2">
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+        className="flex w-full items-center justify-between text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
       >
-        <ChevronDown
-          className={cn(
-            "size-3 transition-transform duration-150",
-            expanded && "rotate-180",
-          )}
-        />
-        <span>Details</span>
+        <span className="flex items-center gap-1">
+          <ChevronDown
+            className={cn(
+              "size-3 transition-transform duration-150",
+              expanded && "rotate-180",
+            )}
+          />
+          <span>Details</span>
+        </span>
+        <span className="text-[10px]">{timestamp}</span>
       </button>
       {expanded && (
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground/60">
@@ -147,6 +157,13 @@ function MessageMetadata({ message }: { message: ChatMessage }) {
       )}
     </div>
   );
+}
+
+function formatTime(ts: number): string {
+  return new Date(ts).toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
 export function MessageBubble({
@@ -211,7 +228,10 @@ export function MessageBubble({
             )}
           </span>
         ) : isUser ? (
-          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+          <>
+            <p className="whitespace-pre-wrap break-words">{message.content}</p>
+            <p className="mt-1 text-right text-[10px] text-primary-foreground/60">{formatTime(message.createdAt)}</p>
+          </>
         ) : (
           <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:leading-relaxed prose-pre:bg-transparent prose-pre:p-0">
             <ReactMarkdown
