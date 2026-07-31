@@ -12,8 +12,8 @@ import { useState, type ComponentProps } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
-import { ThinkingOrb } from "thinking-orbs";
 import { cn, copyToClipboard } from "@/lib/utils";
+import { PendingStatus } from "@/components/chat/PendingStatus";
 import type { ChatMessage } from "@/types/chat";
 
 /**
@@ -217,14 +217,11 @@ export function MessageBubble({
         )}
       >
         {message.isPending ? (
-          <span className="inline-flex items-center gap-5">
-            <ThinkingOrb state="composing" size={64} speed={1.25} />
-            {message.pendingLabel && (
-              <span className="text-xs text-muted-foreground">
-                {message.pendingLabel}
-              </span>
-            )}
-          </span>
+          <PendingStatus
+            phase={message.pendingPhase}
+            label={message.pendingLabel}
+            reformulatedQuestion={message.reformulatedQuestion}
+          />
         ) : isUser ? (
           <>
             <p className="whitespace-pre-wrap break-words">{message.content}</p>

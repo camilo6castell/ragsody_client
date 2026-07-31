@@ -14,6 +14,7 @@ import {
   sendMessage,
   detectSendMode,
 } from "@/lib/sendMessage";
+import type { AgentStatusUpdate } from "@/lib/sendMessage";
 import { useConversationsStore } from "@/stores/conversationsStore";
 import {
   selectDemoFiles,
@@ -101,7 +102,10 @@ export function ChatView() {
           ? "streaming response"
           : mode === "demo"
             ? "contacting Gemini..."
-            : "compacting the response",
+            : mode === "client_agent"
+              ? undefined
+              : "compacting the response",
+      pendingPhase: mode === "client_agent" ? "retrieving" : undefined,
     };
 
     addMessage(conversation.id, userMsg);
@@ -120,6 +124,12 @@ export function ChatView() {
       },
       webSearch: conversation.useWebSearch,
       useAgent: conversation.useAgent,
+      onStatus: (update: AgentStatusUpdate) => {
+        updateMessage(conversation.id, assistantId, {
+          pendingPhase: update.phase,
+          reformulatedQuestion: update.reformulatedQuestion,
+        });
+      },
       // Demo-mode attachments + credentials: the attached files' content goes
       // with the next query straight to Gemini (never to any backend). `demo`
       // stays undefined in any other configuration.

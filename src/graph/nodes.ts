@@ -41,7 +41,7 @@ export async function retrieveNode(state: RAGState): Promise<Partial<RAGState>> 
 // EVALUATE
 // ======================================================
 
-const CONFIDENCE_LIMIT = 0.80
+export const CONFIDENCE_LIMIT = 0.80
 
 export function evaluateNode(): Partial<RAGState> {
   return {}

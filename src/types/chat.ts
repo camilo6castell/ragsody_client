@@ -17,6 +17,10 @@ export interface ChatMessage {
   isPending?: boolean
   /** Texto junto a los puntos de carga mientras isPending (ej. "Revisando la web..."). */
   pendingLabel?: string
+  /** Etapa actual del agente in-browser mientras isPending (ej. "generating"). */
+  pendingPhase?: string
+  /** Pregunta reformulada por el agente in-browser (chip mientras isPending). */
+  reformulatedQuestion?: string
   /** Lo que REALMENTE pasó en este mensaje -- ver QueryResponse.used_web_search. */
   usedWebSearch?: boolean
   webSources?: WebSource[]

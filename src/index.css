@@ -269,6 +269,38 @@ body {
   animation: message-enter 0.3s ease-out both;
 }
 
+/* Pending status ticker: the current word settles at the center (fade in
+ * from below) and rises out (fade up) when the next status replaces it. */
+@keyframes status-word-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-word-in {
+  animation: status-word-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes status-word-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.status-word-out {
+  animation: status-word-out 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* Subtle fade for page-level transitions */
 @keyframes fade-in {
   from {

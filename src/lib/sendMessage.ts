@@ -1,5 +1,7 @@
 import { DEMO_MODE, askGeminiDemo, callDemoEndpointStream } from "./demo"
 import { buildRagGraph, buildInitialState } from "@/graph/graph"
+import { CONFIDENCE_LIMIT } from "@/graph/nodes"
+import type { RAGState } from "@/graph/state"
 import { postQuery } from "./api/client"
 import type { QueryResponse, WebSource } from "@/types/api"
 
@@ -8,6 +10,22 @@ import type { QueryResponse, WebSource } from "@/types/api"
 // ============================================================
 
 export type SendMode = "demo" | "client_agent" | "demo_endpoint" | "backend"
+
+export type AgentPhase =
+  | "retrieving"
+  | "evaluating"
+  | "reformulating"
+  | "generating"
+  | "reviewing"
+  | "correcting"
+  | "finalizing"
+
+export interface AgentStatusUpdate {
+  phase: AgentPhase
+  reformulatedQuestion?: string
+}
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export interface SendMessageParams {
   question: string
@@ -31,6 +49,8 @@ export interface SendMessageParams {
    * Required when DEMO_MODE: demo has no build-time credentials.
    */
   demo?: { apiKey: string; model: string }
+  /** Real-time agent pipeline status (in-browser agent only). */
+  onStatus?: (update: AgentStatusUpdate) => void
 }
 
 export interface SendMessageResult {
@@ -74,7 +94,43 @@ async function runClientAgent(params: SendMessageParams): Promise<SendMessageRes
     model_override: params.generation?.model ?? null,
   })
 
-  const finalState = await graph.invoke(initialState)
+  const onStatus = params.onStatus
+  let confidence = initialState.confidence
+  let reformulated = initialState.reformulated
+  let reformulatedQuestion: string | undefined
+  let finalState: RAGState = initialState
+
+  const report = (phase: AgentPhase) => onStatus?.({ phase, reformulatedQuestion })
+
+  report("retrieving")
+
+  const stream = await graph.stream(initialState, { streamMode: "updates" })
+  for await (const update of stream) {
+    const nodeName = Object.keys(update)[0] as keyof typeof update
+    const nodeUpdate = update[nodeName] as Partial<RAGState> | undefined
+    finalState = { ...finalState, ...nodeUpdate }
+
+    if (nodeName === "retrieve") {
+      if (nodeUpdate?.confidence !== undefined) {
+        confidence = nodeUpdate.confidence as number
+      }
+      report("evaluating")
+      await delay(400)
+      report(reformulated || confidence >= CONFIDENCE_LIMIT ? "generating" : "reformulating")
+    } else if (nodeName === "reformulate") {
+      reformulated = true
+      reformulatedQuestion = (nodeUpdate?.question as string | undefined) ?? params.question
+      report("reformulating")
+      await delay(900)
+      report("retrieving")
+    } else if (nodeName === "generate") {
+      report("reviewing")
+    } else if (nodeName === "review") {
+      report(nodeUpdate?.review_passed === false ? "correcting" : "finalizing")
+    } else if (nodeName === "correct") {
+      report("reviewing")
+    }
+  }
 
   const usedCollections = [
     ...new Set<string>(
