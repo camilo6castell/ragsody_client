@@ -57,12 +57,16 @@ function SelectContent({
       >
         <SelectPrimitive.Popup
           className={cn(
-            "max-h-[min(18rem,var(--available-height))] min-w-[var(--anchor-width)] overflow-auto rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-lg backdrop-blur-xl",
+            "min-w-[var(--anchor-width)] overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg backdrop-blur-xl",
             className
           )}
           {...props}
         >
-          {children}
+          <SelectPrimitive.List
+            className="max-h-[min(18rem,var(--available-height))] overflow-y-auto overscroll-contain p-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
+          >
+            {children}
+          </SelectPrimitive.List>
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
     </SelectPrimitive.Portal>
