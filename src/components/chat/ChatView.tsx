@@ -127,8 +127,12 @@ export function ChatView() {
       onStatus: (update: AgentStatusUpdate) => {
         updateMessage(conversation.id, assistantId, {
           pendingPhase: update.phase,
-          reformulatedQuestion: update.reformulatedQuestion,
         });
+        if (update.reformulatedQuestion) {
+          updateMessage(conversation.id, userMsg.id, {
+            reformulatedQuestion: update.reformulatedQuestion,
+          });
+        }
       },
       // Demo-mode attachments + credentials: the attached files' content goes
       // with the next query straight to Gemini (never to any backend). `demo`
@@ -190,6 +194,11 @@ export function ChatView() {
           webSources: result.webSources,
           isPending: false,
         });
+        if (result.reformulatedQuestion) {
+          updateMessage(conversation.id, userMsg.id, {
+            reformulatedQuestion: result.reformulatedQuestion,
+          });
+        }
         if (result.webSearchQuotaExceeded) {
           setWebSearchQuotaExceeded(true);
         }

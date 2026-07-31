@@ -1,9 +1,5 @@
-import { Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ThinkingOrb } from "thinking-orbs";
-
-const REFORMULATION_HINT =
-  "When the original question doesn't pass enough confidence, it's reformulated by an agent based on the context of the selected sources."
 
 /**
  * Word ticker: the current status settles at the center (fade in from
@@ -45,11 +41,9 @@ function StatusTicker({ status }: { status: string }) {
 export function PendingStatus({
   phase,
   label,
-  reformulatedQuestion,
 }: {
   phase?: string;
   label?: string;
-  reformulatedQuestion?: string;
 }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-5">
@@ -59,18 +53,6 @@ export function PendingStatus({
           <StatusTicker status={phase} />
         ) : (
           label && <span className="text-xs text-muted-foreground">{label}</span>
-        )}
-        {phase && reformulatedQuestion && (
-          <span
-            title={REFORMULATION_HINT}
-            className="inline-flex max-w-[260px] shrink-0 cursor-help items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 py-0.5 pl-1.5 pr-2.5 text-[11px]"
-          >
-            <Sparkles className="size-3 shrink-0 text-primary/70" />
-            <span className="shrink-0 font-medium text-foreground/80">
-              Reformulated question:
-            </span>
-            <span className="truncate text-muted-foreground">{reformulatedQuestion}</span>
-          </span>
         )}
       </span>
     </span>

@@ -58,6 +58,8 @@ export interface SendMessageResult {
   confidence?: number
   collectionsUsed?: string[]
   reformulated?: boolean
+  /** The agent's reformulation of the user question (persisted on the user message). */
+  reformulatedQuestion?: string
   usedWebSearch?: boolean
   webSources?: WebSource[]
   webSearchQuotaExceeded?: boolean
@@ -119,7 +121,8 @@ async function runClientAgent(params: SendMessageParams): Promise<SendMessageRes
       report(reformulated || confidence >= CONFIDENCE_LIMIT ? "generating" : "reformulating")
     } else if (nodeName === "reformulate") {
       reformulated = true
-      reformulatedQuestion = (nodeUpdate?.question as string | undefined) ?? params.question
+      const raw = nodeUpdate?.question as string | undefined
+      reformulatedQuestion = (raw ?? params.question).trim() || params.question
       report("reformulating")
       await delay(900)
       report("retrieving")
@@ -143,6 +146,7 @@ async function runClientAgent(params: SendMessageParams): Promise<SendMessageRes
     confidence: finalState.confidence,
     collectionsUsed: usedCollections,
     reformulated: finalState.reformulated,
+    reformulatedQuestion,
     usedWebSearch: finalState.usedWebSearch,
     webSources: finalState.usedWebSearch
       ? (finalState.webResults as { title: string; url: string }[] | undefined)?.map((r) => ({

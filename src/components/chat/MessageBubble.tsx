@@ -101,8 +101,7 @@ function MessageMetadata({ message }: { message: ChatMessage }) {
   const hasMetadata =
     message.confidence !== undefined ||
     !!message.collectionsUsed?.length ||
-    message.usedWebSearch ||
-    message.reformulated;
+    message.usedWebSearch;
 
   if (!hasMetadata) {
     return (
@@ -150,8 +149,53 @@ function MessageMetadata({ message }: { message: ChatMessage }) {
               web search
             </span>
           )}
-          {message.reformulated && <span>reformulated</span>}
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Footer for user messages: mirrors the assistant's "Details" row. When the
+ * question was reformulated, the whole row is a button (Reformulated on the
+ * left, timestamp on the right) that expands the full reformulated question.
+ * Otherwise it's just the timestamp, not clickable.
+ */
+function MessageFooter({ message }: { message: ChatMessage }) {
+  const [expanded, setExpanded] = useState(false);
+  const timestamp = formatTime(message.createdAt);
+  const hasReformulated = !!message.reformulatedQuestion;
+
+  if (!hasReformulated) {
+    return (
+      <div className="mt-1 flex justify-end">
+        <span className="text-[10px] text-primary-foreground/60">{timestamp}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className="flex w-full items-center justify-between text-[11px] text-primary-foreground/50 transition-colors hover:text-primary-foreground"
+      >
+        <span className="flex items-center gap-1">
+          <ChevronDown
+            className={cn(
+              "size-3 transition-transform duration-150",
+              expanded && "rotate-180",
+            )}
+          />
+          <span>Reformulated</span>
+        </span>
+        <span className="text-[10px]">{timestamp}</span>
+      </button>
+      {expanded && (
+        <p className="mt-1.5 w-full break-words rounded-lg border border-primary-foreground/20 bg-primary-foreground/10 px-2.5 py-2 text-[11px] leading-relaxed text-primary-foreground/70">
+          {message.reformulatedQuestion}
+        </p>
       )}
     </div>
   );
@@ -220,12 +264,11 @@ export function MessageBubble({
           <PendingStatus
             phase={message.pendingPhase}
             label={message.pendingLabel}
-            reformulatedQuestion={message.reformulatedQuestion}
           />
         ) : isUser ? (
           <>
             <p className="whitespace-pre-wrap break-words">{message.content}</p>
-            <p className="mt-1 text-right text-[10px] text-primary-foreground/60">{formatTime(message.createdAt)}</p>
+            <MessageFooter message={message} />
           </>
         ) : (
           <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:leading-relaxed prose-pre:bg-transparent prose-pre:p-0">
