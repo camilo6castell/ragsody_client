@@ -28,7 +28,7 @@ export interface SendMessageParams {
   attachmentsContext?: string
   /**
    * User-provided demo credentials (onboarding modal, memory only).
-   * Overrides the VITE_GEMINI_* build-time fallbacks in demo.ts.
+   * Required when DEMO_MODE: demo has no build-time credentials.
    */
   demo?: { apiKey: string; model: string }
 }

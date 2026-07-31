@@ -20,17 +20,16 @@
  *     entirely. Web search, think mode and the reviewer agent all depend
  *     on the backend, so they're forced off.
  *
- * Trade-off worth being explicit about: VITE_GEMINI_API_KEY ends up in the
- * public JS bundle, same as any client-side API key. Use a key scoped/
- * rate-limited for this purpose, never the same key used by the real
- * backend.
+ * Privacy: demo mode has no build-time credentials. The visitor's key/model
+ * come from the onboarding modal, live only in React memory (stores/demoStore)
+ * and are sent nowhere except Gemini itself.
  */
 
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true"
 
 /** Base URL of Gemini's OpenAI-compatible API, called directly from the browser. */
 export const GEMINI_BASE_URL =
-  import.meta.env.VITE_GEMINI_BASE_URL ??
+  import.meta.env.VITE_LLM_GEMINI_URL ??
   "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 /** Tooltip title (hover) for any control disabled in demo mode. */
@@ -41,7 +40,7 @@ export const DEMO_MODE_EXPLANATION =
   "Demo mode: this deployment has no backend, no GPU, and none of the " +
   "author's indexed collections -- all of that only runs on the author's " +
   "machine. Chat goes straight from your browser to Gemini " +
-  `(${import.meta.env.VITE_GEMINI_MODEL ?? "gemini"}), with no retrieval ` +
+  "(gemini), with no retrieval " +
   "behind it. That's why it's the only mode available here, and why Web " +
   "search / Think / Agent are disabled -- they all depend on the real " +
   "backend. See the source at github.com/camilo6castell for the full " +
@@ -80,8 +79,8 @@ export interface DemoAnswer {
  * handles plain Errors for this reason).
  *
  * apiKey/model are the user-provided values from the onboarding modal
- * (memory only -- see stores/demoStore.ts). When omitted they fall back
- * to the build-time VITE_GEMINI_* env vars.
+ * (memory only -- see stores/demoStore.ts). Both are required: demo mode
+ * has no build-time credentials.
  */
 export async function askGeminiDemo(params: {
   question: string
@@ -92,13 +91,13 @@ export async function askGeminiDemo(params: {
   model?: string
 }): Promise<DemoAnswer> {
   const baseUrl = GEMINI_BASE_URL
-  const apiKey = params.apiKey ?? import.meta.env.VITE_GEMINI_API_KEY
-  const model = params.model ?? import.meta.env.VITE_GEMINI_MODEL
+  const apiKey = params.apiKey
+  const model = params.model
 
   if (!apiKey || !model) {
     throw new Error(
       "Demo mode is on but no API key/model is available. Enter yours in the " +
-        "welcome screen, or set VITE_GEMINI_API_KEY/VITE_GEMINI_MODEL at build time.",
+        "welcome screen.",
     )
   }
 

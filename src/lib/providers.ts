@@ -31,7 +31,7 @@ function _backendUrlTable(): Record<string, string> {
   return {
     flm: import.meta.env.VITE_LLM_FLM_URL ?? "",
     ollama: import.meta.env.VITE_LLM_OLLAMA_URL ?? "",
-    gemini: import.meta.env.VITE_LLM_GEMINI_URL ?? import.meta.env.VITE_GEMINI_BASE_URL ?? "",
+    gemini: import.meta.env.VITE_LLM_GEMINI_URL ?? "",
   }
 }
 

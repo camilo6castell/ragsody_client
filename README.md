@@ -62,4 +62,4 @@ See `.env.example` for the full annotated list. Key variables:
 | `VITE_LLM_FLM_URL` / `VITE_LLM_OLLAMA_URL` / `VITE_LLM_GEMINI_URL` | OpenAI-compatible endpoints for each backend runtime |
 | `VITE_LLM_ROL_*` | Role → `backend,model` mapping for the agent pipeline (GENERATE, REFORMULATE, REVIEW, SUPPLEMENT) |
 | `VITE_DEMO_MODE` | `true` for a backend-less static deployment (blocking welcome screen, see `src/components/demo/DemoOnboarding.tsx`) |
-| `VITE_GEMINI_API_KEY` / `VITE_GEMINI_BASE_URL` / `VITE_GEMINI_MODEL` | Optional build-time fallbacks for demo mode; the welcome screen normally asks visitors for their own key/model (memory only) |
+| `VITE_GEMINI_API_KEY` | API key for the `gemini` backend (in-browser agent, see `src/lib/providers.ts`) |
