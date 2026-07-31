@@ -32,6 +32,13 @@ export interface GenerationOptionsState {
    */
   thinkMode: boolean | null
   /**
+   * Modelo activo del agente in-browser, en formato "backend,model"
+   * (ej. "flm,qwen3.5:9b"). null = "built-in": usa los roles de .env
+   * (VITE_LLM_ROL_GENERATE/REFORMULATE/REVIEW). Solo aplica en modo
+   * agent; en modo backend el modelo lo decide el servidor.
+   */
+  model: string | null
+  /**
    * No hay maxTurns/topKInitial/topKFinal acá: pasaron a ser
    * exclusivamente configuración de servidor (.env) -- ver
    * GenerationOptions en src/api/schemas/chat.py. Ningún dato de

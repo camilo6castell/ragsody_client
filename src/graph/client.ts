@@ -1,4 +1,4 @@
-import { getProviderConfig } from "@/lib/providers"
+import { getProviderConfig, getProviderConfigFor, parseModelOverride } from "@/lib/providers"
 import type { ProviderConfig } from "@/lib/providers"
 import { getBackendData } from "@/config/models/registry"
 import type { ModelEntry } from "@/config/models/types"
@@ -189,6 +189,12 @@ export interface LLMOptions {
   thinkMode?: boolean | null
   extra?: Record<string, unknown> | null
   signal?: AbortSignal
+  /**
+   * Override "backend,model" que reemplaza al rol del .env para esta
+   * llamada (usado por el agente cuando el usuario elige un modelo
+   * explícito en el dropdown de Model).
+   */
+  override?: string | null
 }
 
 export async function callLLM(
@@ -196,7 +202,13 @@ export async function callLLM(
   messages: ChatTurn[],
   opts?: LLMOptions,
 ): Promise<string | null> {
-  const config = getProviderConfig(providerName)
+  let config: ProviderConfig
+  if (opts?.override) {
+    const { backend, model } = parseModelOverride(opts.override)
+    config = getProviderConfigFor(backend, model)
+  } else {
+    config = getProviderConfig(providerName)
+  }
 
   if (config.client === "openai_compat") {
     return _callOpenAICompat(config, messages, opts)

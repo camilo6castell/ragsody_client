@@ -33,6 +33,7 @@ const StateAnnotation = Annotation.Root({
   webResults: Annotation<WebSearchResult[]>({ reducer: (_, b) => b, default: () => [] }),
   usedWebSearch: Annotation<boolean>({ reducer: (_, b) => b, default: () => false }),
   webSearchQuotaExceeded: Annotation<boolean>({ reducer: (_, b) => b, default: () => false }),
+  model_override: Annotation<string | null>({ reducer: (_, b) => b, default: () => null }),
 })
 
 // ======================================================
@@ -89,6 +90,7 @@ export function buildInitialState(overrides: Partial<RAGState>): RAGState {
     webResults: [],
     usedWebSearch: false,
     webSearchQuotaExceeded: false,
+    model_override: null,
     ...overrides,
   }
 }

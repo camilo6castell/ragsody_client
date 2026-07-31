@@ -38,6 +38,12 @@ export function getBackendData(backend: string): Record<string, unknown> {
   return data as unknown as Record<string, unknown>
 }
 
+export function listModels(): { backend: string; model: string }[] {
+  return Object.entries(MODELS_DATA).flatMap(([backend, models]) =>
+    Object.keys(models).map((model) => ({ backend, model })),
+  )
+}
+
 export function getSupports(
   capabilitiesKey: string,
   modelName: string,

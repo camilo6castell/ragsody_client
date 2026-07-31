@@ -216,4 +216,74 @@ export function getMaxTokens(roleName: string): number | null {
   return _getModelMaxTokens(config.capabilities, config.model)
 }
 
+// ============================================================
+// Model override (agente in-browser: un modelo para todos los roles)
+// ============================================================
+
+/** Parses "backend,model" (formato de VITE_LLM_ROL_* y del dropdown de Model). */
+export function parseModelOverride(spec: string): { backend: string; model: string } {
+  const parts = spec.split(",")
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    throw new Error(
+      `Invalid model override: '${spec}'. Expected format "backend,model".`,
+    )
+  }
+  return { backend: parts[0], model: parts[1] }
+}
+
+/**
+ * Builds a ProviderConfig for an arbitrary backend+model (independiente de
+ * los roles del .env). Usado por el agente cuando el usuario selecciona un
+ * modelo explícito en el dropdown de Model.
+ */
+export function getProviderConfigFor(
+  backend: string,
+  model: string,
+): ProviderConfig {
+  const urlTable = _backendUrlTable()
+  if (!urlTable[backend]) {
+    throw new Error(
+      `Backend '${backend}' has no URL configured -- ` +
+        `VITE_LLM_${backend.toUpperCase()}_URL is missing in .env`,
+    )
+  }
+  return {
+    name: "override",
+    backend,
+    baseUrl: urlTable[backend],
+    apiKey: _backendApiKeyTable()[backend] ?? "",
+    model,
+    client: _BACKEND_CLIENT[backend],
+    capabilities: backend,
+  }
+}
+
+/** Returns the set of supported capability names for an arbitrary backend+model. */
+export function getModelSupports(backend: string, model: string): Set<string> {
+  return _getModelSupports(backend, model)
+}
+
+/** Returns the default think mode for an arbitrary backend+model, or null if unsupported. */
+export function getModelDefaultThink(backend: string, model: string): boolean | null {
+  return _getModelDefaultThink(backend, model)
+}
+
+/**
+ * Resolves the effective (backend, model) for the generate role given the
+ * conversation's model selection: an explicit override, or the env role spec.
+ */
+export function effectiveGenerateModel(
+  override: string | null,
+): { backend: string; model: string } {
+  if (override) {
+    try {
+      return parseModelOverride(override)
+    } catch {
+      /* override inválido (datos persistidos viejos): caer al rol del .env */
+    }
+  }
+  const config = getProviderConfig("generate")
+  return { backend: config.backend, model: config.model }
+}
+
 

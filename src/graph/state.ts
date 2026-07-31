@@ -16,6 +16,7 @@ export interface RAGState {
   webResults: WebSearchResult[]
   usedWebSearch: boolean
   webSearchQuotaExceeded: boolean
+  model_override: string | null
 }
 
 export type RAGStateUpdate = Partial<RAGState>

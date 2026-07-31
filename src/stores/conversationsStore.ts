@@ -6,6 +6,7 @@ import type { ChatMessage, ChatMode, Conversation } from "@/types/chat"
 const emptyGeneration = {
   maxTokens: null,
   thinkMode: null,
+  model: null,
 }
 
 function makeConversation(): Conversation {
@@ -177,6 +178,7 @@ export const useConversationsStore = create<ConversationsState>()(
           conversations: persisted.conversations.map((c) => ({
             ...c,
             useWebSearch: c.useWebSearch ?? false,
+            generation: { ...emptyGeneration, ...c.generation, model: c.generation?.model ?? null },
           })),
         }
       },

@@ -80,7 +80,9 @@ export async function reformulateNode(state: RAGState): Promise<Partial<RAGState
   ].join("\n")
 
   const messages = buildMessages(reformulationPrompt, [], REFORMULATION_SYSTEM_PROMPT)
-  const reformulated = await callLLM("reformulate", messages)
+  const reformulated = await callLLM("reformulate", messages, {
+    override: state.model_override,
+  })
 
   return {
     question: reformulated ?? original,
@@ -107,6 +109,7 @@ export async function generateNode(state: RAGState): Promise<Partial<RAGState>> 
     maxTokens: state.max_tokens,
     thinkMode: state.think_mode,
     extra: state.extra ?? undefined,
+    override: state.model_override,
   })
 
   return { answer: answer ?? "Model did not return a response." }
@@ -133,7 +136,9 @@ export async function reviewNode(state: RAGState): Promise<Partial<RAGState>> {
   const reviewPrompt = buildReviewPrompt(contextChunks, state.question, state.answer)
   const messages = buildMessages(reviewPrompt, [], REVIEW_SYSTEM_PROMPT)
 
-  const raw = await callLLM("review", messages)
+  const raw = await callLLM("review", messages, {
+    override: state.model_override,
+  })
   const temp = raw ?? '{"passed": true, "feedback": ""}'
 
   let passed = true
@@ -182,6 +187,7 @@ export async function correctNode(state: RAGState): Promise<Partial<RAGState>> {
     maxTokens: state.max_tokens,
     thinkMode: state.think_mode,
     extra: state.extra ?? undefined,
+    override: state.model_override,
   })
 
   return { answer: corrected ?? state.answer, review_passed: false }

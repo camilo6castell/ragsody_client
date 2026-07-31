@@ -1,6 +1,14 @@
+import { useQuery } from "@tanstack/react-query"
 import { Brain, FlaskConical, Globe, Atom } from "lucide-react"
+import { listModels } from "@/config/models/registry"
+import { getServerGenerationModel } from "@/lib/api/client"
 import { DEMO_MODE, DEMO_MODE_EXPLANATION } from "@/lib/demo"
-import { getSupports, getDefaultThink, hasFullAgentConfig } from "@/lib/providers"
+import {
+  effectiveGenerateModel,
+  getModelDefaultThink,
+  getModelSupports,
+  hasFullAgentConfig,
+} from "@/lib/providers"
 import { cn } from "@/lib/utils"
 import { useConversationsStore } from "@/stores/conversationsStore"
 import type { Conversation } from "@/types/chat"
@@ -52,10 +60,28 @@ export function ResponseModeSection({
   const webSearchQuotaExceeded = useConversationsStore((s) => s.webSearchQuotaExceeded)
   const setWebSearchQuotaExceeded = useConversationsStore((s) => s.setWebSearchQuotaExceeded)
 
-  const supportsThinkMode = getSupports("generate").has("think_mode")
-  const effectiveThink = conversation.generation.thinkMode ?? getDefaultThink("generate") ?? false
   const agentConfigured = hasFullAgentConfig()
   const agentActive = !DEMO_MODE && conversation.useAgent && agentConfigured
+  // En modo backend el modelo lo decide el servidor, así que el override
+  // solo aplica al agente in-browser.
+  const modelOverride = agentActive ? conversation.generation.model : null
+  const { backend: genBackend, model: genModel } = effectiveGenerateModel(modelOverride)
+  const supportsThinkMode = getModelSupports(genBackend, genModel).has("think_mode")
+  const effectiveThink = conversation.generation.thinkMode ?? getModelDefaultThink(genBackend, genModel) ?? false
+
+  const modelsByBackend = new Map<string, string[]>()
+  for (const { backend, model } of listModels()) {
+    const names = modelsByBackend.get(backend) ?? []
+    names.push(model)
+    modelsByBackend.set(backend, names)
+  }
+
+  const { data: serverModel } = useQuery({
+    queryKey: ["server-generation-model"],
+    queryFn: getServerGenerationModel,
+    staleTime: 60_000,
+    enabled: !DEMO_MODE && !agentActive,
+  })
 
   const enhancements: Enhancement[] = [
     {
@@ -114,6 +140,45 @@ export function ResponseModeSection({
 
   return (
     <div className="space-y-4 px-3">
+      {/* Model -- dropdown */}
+      {!DEMO_MODE && (
+        <div className="space-y-2">
+          <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
+            Model
+          </span>
+          {agentActive ? (
+            <select
+              value={conversation.generation.model ?? "built-in"}
+              onChange={(e) =>
+                setGeneration(conversation.id, {
+                  model: e.target.value === "built-in" ? null : e.target.value,
+                })
+              }
+              className="w-full cursor-pointer rounded-xl border border-border/60 bg-overlay/50 px-2.5 py-2 text-xs font-medium text-foreground outline-none transition-colors hover:border-border focus:border-primary/50"
+            >
+              <option value="built-in">built-in</option>
+              {[...modelsByBackend.entries()].map(([backend, modelNames]) => (
+                <optgroup key={backend} label={backend}>
+                  {modelNames.map((model) => (
+                    <option key={`${backend},${model}`} value={`${backend},${model}`}>
+                      {model}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          ) : (
+            <select
+              disabled
+              title="In backend mode the server decides which model to use."
+              className="w-full cursor-not-allowed rounded-xl border border-border/30 bg-overlay/30 px-2.5 py-2 text-xs font-medium text-muted-foreground/60 outline-none"
+            >
+              <option>server: {serverModel || "…"}</option>
+            </select>
+          )}
+        </div>
+      )}
+
       {/* Search mode -- segmented control */}
       <div className="space-y-2">
         <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">

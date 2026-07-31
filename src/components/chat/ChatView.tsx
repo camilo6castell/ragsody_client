@@ -96,6 +96,7 @@ export function ChatView() {
       generation: {
         maxTokens: conversation.generation.maxTokens,
         thinkMode: conversation.generation.thinkMode,
+        model: conversation.generation.model,
       },
       webSearch: conversation.useWebSearch,
       useAgent: conversation.useAgent,

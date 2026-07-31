@@ -6,6 +6,7 @@ import type {
   DeleteResponse,
   EphemeralFilesResponse,
   FileUploadResponse,
+  ProvidersResponse,
   QueryRequest,
   QueryResponse,
 } from "@/types/api"
@@ -105,6 +106,17 @@ export function getContextLimitDetail(error: unknown): ContextLimitExceededDetai
 export async function getCollections(): Promise<CollectionsResponse> {
   const { data } = await api.get<CollectionsResponse>("/collections")
   return data
+}
+
+/**
+ * Nombre del modelo que el servidor usa para el rol generate
+ * (GET /api/v1/config/providers). Usado por el dropdown de Model en
+ * modo backend, donde el modelo lo decide el servidor.
+ */
+export async function getServerGenerationModel(): Promise<string> {
+  const { data } = await api.get<ProvidersResponse>("/config/providers")
+  const provider = data.providers[data.active_generation_provider]
+  return provider?.model ?? ""
 }
 
 export async function postQuery(

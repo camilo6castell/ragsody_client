@@ -15,7 +15,12 @@ export interface SendMessageParams {
   mode: string
   chatHistory: { user: string; assistant: string }[]
   conversationId?: string | null
-  generation?: { maxTokens: number | null; thinkMode: boolean | null } | null
+  generation?: {
+    maxTokens: number | null
+    thinkMode: boolean | null
+    /** Override "backend,model" del agente in-browser -- null = built-in (roles del .env). */
+    model?: string | null
+  } | null
   webSearch: boolean
   /** When true, the in-browser LangGraph agent runs instead of POST /query. */
   useAgent?: boolean
@@ -59,6 +64,7 @@ async function runClientAgent(params: SendMessageParams): Promise<SendMessageRes
     max_tokens: params.generation?.maxTokens ?? null,
     think_mode: params.generation?.thinkMode ?? null,
     webSearch: params.webSearch,
+    model_override: params.generation?.model ?? null,
   })
 
   const finalState = await graph.invoke(initialState)
