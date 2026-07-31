@@ -1,75 +1,65 @@
-# React + TypeScript + Vite
+# RAGsody — Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend for RAGsody, a local RAG chat over locally-indexed document collections. It talks to the FastAPI backend in `../server` (`/api/v1`) and, in agent mode, runs the full retrieval pipeline (query reformulation, retrieval + web search, generation, review/correction) in the browser using local LLM runtimes via OpenAI-compatible endpoints.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Chat UI** with markdown rendering, syntax highlighting, file attachments, and streaming responses.
+- **Two response modes**:
+  - *Agent mode*: an in-browser LangGraph pipeline (retrieve → evaluate → reformulate on low confidence → generate → review/correct) orchestrated through the MCP server (`/mcp`), including live web search (`search_web` tool) and a Think button.
+  - *Backend mode*: delegates the whole query to the server's RAG pipeline; the server decides which model to use.
+- **Model selection** per conversation (Generation section): pick a backend+model (`flm`, `ollama`, `gemini`) to override the built-in role mapping, or use the backend's configured model.
+- **Demo mode** (`VITE_DEMO_MODE=true`): static deployment with no backend (see `src/lib/demo.ts`).
+- Dark/light theme sync, resizable sidebar, persisted conversations (localStorage).
 
-## React Compiler
+## Tech stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+React 19 · Vite 8 · TypeScript · Tailwind CSS v4 · shadcn/ui (Base UI) · @base-ui/react · TanStack Query · Zustand · LangGraph (`@langchain/langgraph`) · react-markdown · motion
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+pnpm install
+cp .env.example .env
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The Vite dev server runs on http://localhost:5173. Point `VITE_API_BASE_URL` at the backend (`http://127.0.0.1:8000/api/v1` by default).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Script | Description |
+| --- | --- |
+| `pnpm dev` | Start the Vite dev server with HMR |
+| `pnpm build` | Type-check (`tsc -b`) and production build |
+| `pnpm lint` | Run ESLint |
+| `pnpm preview` | Preview the production build |
+
+## Project structure
 
 ```
+src/
+  components/
+    chat/        Chat view: ChatView, MessageList/Bubble, MessageInput, ResponseModeSection, ...
+    layout/      App shell (sidebar, panels)
+    ui/          Reusable primitives (select, switch, buttons, ...)
+  config/models/ Frontend model registry: models.json + per-backend files, listModels()
+  graph/         Agent pipeline: state.ts, graph.ts, nodes.ts, client.ts (LLM calls, providers)
+  lib/           API client (src/lib/api), providers.ts, mcp.ts (MCP client + web search), sendMessage.ts, demo.ts
+  stores/        Zustand stores (conversationsStore, uiStore, demoAttachmentsStore)
+  types/         Shared types (chat.ts, api.ts)
+```
+
+## Environment variables
+
+See `.env.example` for the full annotated list. Key variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_API_BASE_URL` | Base URL of the backend REST API |
+| `VITE_MCP_BASE_URL` | Base URL of the MCP server (same host as the API, `/mcp`) |
+| `VITE_MCP_BEARER_TOKEN` | Bearer token for MCP (must match server's `MCP_BEARER_TOKEN`) |
+| `VITE_LLM_FLM_URL` / `VITE_LLM_OLLAMA_URL` / `VITE_LLM_GEMINI_URL` | OpenAI-compatible endpoints for each backend runtime |
+| `VITE_LLM_ROL_*` | Role → `backend,model` mapping for the agent pipeline (GENERATE, REFORMULATE, REVIEW, SUPPLEMENT) |
+| `VITE_DEMO_MODE` | `true` for a backend-less static deployment |
+| `VITE_GEMINI_API_KEY` / `VITE_GEMINI_BASE_URL` / `VITE_GEMINI_MODEL` | Direct browser→Gemini config, only used in demo mode |
