@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import { Navigate, useParams } from "react-router-dom";
@@ -45,6 +46,7 @@ function toHistory(
 }
 
 export function ChatView() {
+  const queryClient = useQueryClient();
   const { conversationId } = useParams<{ conversationId: string }>();
   const conversation = useConversationsStore((s) =>
     s.conversations.find((c) => c.id === conversationId),
@@ -228,6 +230,12 @@ export function ChatView() {
         }
         if (mode === "demo") {
           clearDemoAttachments(conversation.id);
+        }
+        // Real backend: /query and /query/agent consume single-use
+        // attachments after processing (see chat.py) -- refresh the
+        // sidebar list so the consumed files disappear.
+        if (!DEMO_MODE) {
+          queryClient.invalidateQueries({ queryKey: ["attachments", conversation.id] });
         }
       }
     } catch (err) {

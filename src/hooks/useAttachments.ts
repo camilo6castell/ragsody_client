@@ -8,6 +8,10 @@ import {
 } from "@/lib/api/client"
 import { DEMO_MODE } from "@/lib/demo"
 import { useDemoAttachmentsStore, selectDemoFiles } from "@/stores/demoAttachmentsStore"
+import type { DemoAttachment } from "@/stores/demoAttachmentsStore"
+
+/** Same limit as MAX_FILE_BYTES in src/context/attachments.py. */
+const MAX_FILE_BYTES = 512_000
 
 /**
  * Adjuntos ad-hoc de una conversación -- ver src/context/attachments.py
@@ -56,11 +60,29 @@ function useRealAttachments(conversationId: string | null) {
 }
 
 function readFileAsText(file: File): Promise<string> {
+  // Mirrors the real backend's rejections (src/context/attachments.py):
+  // MAX_FILE_BYTES 413 and non-UTF-8 400. Without a backend to enforce
+  // them, a binary/oversized file would otherwise be inlined raw into
+  // Gemini's prompt.
+  if (file.size > MAX_FILE_BYTES) {
+    return Promise.reject(
+      new Error(`File too large (${file.size} bytes). Limit: ${MAX_FILE_BYTES} bytes.`),
+    )
+  }
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result ?? ""))
+    reader.onload = () => {
+      try {
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(
+          new Uint8Array(reader.result as ArrayBuffer),
+        )
+        resolve(text)
+      } catch {
+        reject(new Error("The file is not valid plain-text UTF-8."))
+      }
+    }
     reader.onerror = () => reject(reader.error ?? new Error("Couldn't read the file."))
-    reader.readAsText(file)
+    reader.readAsArrayBuffer(file)
   })
 }
 
@@ -73,13 +95,15 @@ function useDemoAttachments(conversationId: string | null) {
   const upload = useMutation({
     mutationFn: async (file: File) => {
       const content = await readFileAsText(file)
-      addFile(conversationId!, {
+      const info: DemoAttachment = {
         file_id: nanoid(),
         filename: file.name,
         size_bytes: file.size,
         uploaded_at: new Date().toISOString(),
         content,
-      })
+      }
+      addFile(conversationId!, info)
+      return info
     },
   })
 
