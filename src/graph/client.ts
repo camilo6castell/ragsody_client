@@ -26,6 +26,102 @@ function _deepClone<T>(value: T): T {
 }
 
 // ============================================================
+// Streaming helpers
+// ============================================================
+
+/** Yields the raw lines of a Response body (CRLF stripped, empties kept). */
+async function* _readLines(response: Response): AsyncGenerator<string> {
+  const body = response.body
+  if (!body) return
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ""
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    let newlineIndex = buffer.indexOf("\n")
+    while (newlineIndex !== -1) {
+      const line = buffer.slice(0, newlineIndex).replace(/\r$/, "")
+      buffer = buffer.slice(newlineIndex + 1)
+      yield line
+      newlineIndex = buffer.indexOf("\n")
+    }
+  }
+  buffer += decoder.decode()
+  if (buffer) yield buffer.replace(/\r$/, "")
+}
+
+/** Parses an OpenAI-compatible SSE stream, emitting content deltas. */
+async function _streamOpenAiCompat(
+  response: Response,
+  onToken: (delta: string) => void,
+): Promise<string> {
+  let full = ""
+  let done = false
+  let dataLines: string[] = []
+  const flush = (): void => {
+    if (done || dataLines.length === 0) return
+    const payload = dataLines.join("\n").trim()
+    dataLines = []
+    if (payload === "[DONE]") {
+      done = true
+      return
+    }
+    try {
+      const chunk = JSON.parse(payload) as {
+        choices?: { delta?: { content?: string } }[]
+      }
+      const delta = chunk.choices?.[0]?.delta?.content
+      if (delta) {
+        full += delta
+        onToken(delta)
+      }
+    } catch {
+      /* ignore malformed SSE chunk */
+    }
+  }
+
+  for await (const line of _readLines(response)) {
+    if (done) break
+    if (line === "") {
+      flush()
+    } else if (line.startsWith("data:")) {
+      dataLines.push(line.slice(5).trim())
+    }
+  }
+  flush()
+  return full
+}
+
+/** Parses an Ollama native NDJSON stream, emitting content deltas. */
+async function _streamOllamaNative(
+  response: Response,
+  onToken: (delta: string) => void,
+): Promise<string> {
+  let full = ""
+  for await (const line of _readLines(response)) {
+    const trimmed = line.trim()
+    if (!trimmed) continue
+    try {
+      const chunk = JSON.parse(trimmed) as {
+        message?: { content?: string }
+        done?: boolean
+      }
+      const delta = chunk.message?.content
+      if (delta) {
+        full += delta
+        onToken(delta)
+      }
+      if (chunk.done) break
+    } catch {
+      /* ignore malformed NDJSON chunk */
+    }
+  }
+  return full
+}
+
+// ============================================================
 // OpenAI-compatible
 // ============================================================
 
@@ -70,9 +166,12 @@ async function _callOpenAICompat(
 ): Promise<string | null> {
   const url = `${config.baseUrl.replace(/\/$/, "")}/chat/completions`
 
+  const streaming = opts?.onToken != null
+
   const body: Record<string, unknown> = {
     model: config.model,
     messages,
+    stream: streaming,
   }
 
   const modelEntry = _getModelEntry(config.capabilities, config.model)
@@ -97,6 +196,10 @@ async function _callOpenAICompat(
   if (!response.ok) {
     const text = await response.text().catch(() => "")
     throw new Error(`LLM API returned ${response.status}: ${text.slice(0, 200)}`)
+  }
+
+  if (streaming) {
+    return _streamOpenAiCompat(response, opts!.onToken!)
   }
 
   const data = (await response.json()) as {
@@ -142,13 +245,15 @@ async function _callOllamaNative(
 ): Promise<string | null> {
   const url = `${config.baseUrl.replace(/\/$/, "")}/api/chat`
 
+  const streaming = opts?.onToken != null
+
   const body: Record<string, unknown> = {
     model: config.model,
     messages: messages.map((m) => ({
       role: m.role,
       content: m.content,
     })),
-    stream: false,
+    stream: streaming,
   }
 
   const modelEntry = _getModelEntry(config.capabilities, config.model)
@@ -176,6 +281,10 @@ async function _callOllamaNative(
     throw new Error(`Ollama API returned ${response.status}: ${text.slice(0, 200)}`)
   }
 
+  if (streaming) {
+    return _streamOllamaNative(response, opts!.onToken!)
+  }
+
   const data = (await response.json()) as OllamaChatResponse
   return data.message?.content ?? null
 }
@@ -189,6 +298,8 @@ export interface LLMOptions {
   thinkMode?: boolean | null
   extra?: Record<string, unknown> | null
   signal?: AbortSignal
+  /** When set, the LLM call is streamed and every content delta is emitted. */
+  onToken?: (delta: string) => void
   /**
    * Override "backend,model" que reemplaza al rol del .env para esta
    * llamada (usado por el agente cuando el usuario elige un modelo

@@ -1,6 +1,14 @@
 import { retrieveChunks, searchWeb } from "@/lib/mcp"
 import { callLLM, buildMessages, buildPrompt, buildReviewPrompt, buildCorrectionPrompt, formatContextChunks, formatWebChunks, REFORMULATION_SYSTEM_PROMPT, REVIEW_SYSTEM_PROMPT } from "./client"
+import type { LangGraphRunnableConfig } from "@langchain/langgraph"
 import type { RAGState } from "./state"
+
+/** Reads a stream-token callback out of the run's configurable channel. */
+function _onTokenFromConfig(
+  config: LangGraphRunnableConfig | undefined,
+): ((delta: string) => void) | undefined {
+  return config?.configurable?.onToken as ((delta: string) => void) | undefined
+}
 
 // ======================================================
 // RETRIEVE
@@ -94,7 +102,10 @@ export async function reformulateNode(state: RAGState): Promise<Partial<RAGState
 // GENERATE
 // ======================================================
 
-export async function generateNode(state: RAGState): Promise<Partial<RAGState>> {
+export async function generateNode(
+  state: RAGState,
+  config?: LangGraphRunnableConfig,
+): Promise<Partial<RAGState>> {
   if (state.results.length === 0 && state.webResults.length === 0) {
     return { answer: "No relevant context was found for your question." }
   }
@@ -110,6 +121,7 @@ export async function generateNode(state: RAGState): Promise<Partial<RAGState>> 
     thinkMode: state.think_mode,
     extra: state.extra ?? undefined,
     override: state.model_override,
+    onToken: _onTokenFromConfig(config),
   })
 
   return { answer: answer ?? "Model did not return a response." }
@@ -172,7 +184,10 @@ export function routeAfterReview(state: RAGState): "end" | "correct" {
 // CORRECT
 // ======================================================
 
-export async function correctNode(state: RAGState): Promise<Partial<RAGState>> {
+export async function correctNode(
+  state: RAGState,
+  config?: LangGraphRunnableConfig,
+): Promise<Partial<RAGState>> {
   const contextChunks = _allContextChunks(state)
   const correctionPrompt = buildCorrectionPrompt(
     contextChunks,
@@ -188,6 +203,7 @@ export async function correctNode(state: RAGState): Promise<Partial<RAGState>> {
     thinkMode: state.think_mode,
     extra: state.extra ?? undefined,
     override: state.model_override,
+    onToken: _onTokenFromConfig(config),
   })
 
   return { answer: corrected ?? state.answer, review_passed: false }

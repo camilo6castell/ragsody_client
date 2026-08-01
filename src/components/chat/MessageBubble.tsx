@@ -208,6 +208,25 @@ function formatTime(ts: number): string {
   })
 }
 
+/**
+ * Markdown renderer for assistant answers. Shared by the streaming bubble
+ * (isPending && content) and the final message, so the partial streamed
+ * text looks exactly like the finished answer.
+ */
+function MarkdownContent({ content }: { content: string }) {
+  return (
+    <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:leading-relaxed prose-pre:bg-transparent prose-pre:p-0">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeHighlight]}
+        components={{ pre: CodeBlock }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
 export function MessageBubble({
   message,
   onDelete,
@@ -261,25 +280,27 @@ export function MessageBubble({
         )}
       >
         {message.isPending ? (
-          <PendingStatus
-            phase={message.pendingPhase}
-            label={message.pendingLabel}
-          />
+          message.content ? (
+            <>
+              <MarkdownContent content={message.content} />
+              <span
+                aria-hidden="true"
+                className="mt-1 inline-block h-3.5 w-0.5 animate-pulse rounded-full bg-foreground/60 align-middle"
+              />
+            </>
+          ) : (
+            <PendingStatus
+              phase={message.pendingPhase}
+              label={message.pendingLabel}
+            />
+          )
         ) : isUser ? (
           <>
             <p className="whitespace-pre-wrap break-words">{message.content}</p>
             <MessageFooter message={message} />
           </>
         ) : (
-          <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-p:leading-relaxed prose-pre:bg-transparent prose-pre:p-0">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-              components={{ pre: CodeBlock }}
-            >
-              {message.content}
-            </ReactMarkdown>
-          </div>
+          <MarkdownContent content={message.content} />
         )}
 
         {!isUser && !message.isPending && !message.isError && (

@@ -51,6 +51,8 @@ export interface SendMessageParams {
   demo?: { apiKey: string; model: string }
   /** Real-time agent pipeline status (in-browser agent only). */
   onStatus?: (update: AgentStatusUpdate) => void
+  /** Streamed content deltas of the final answer (in-browser agent only). */
+  onToken?: (token: string) => void
 }
 
 export interface SendMessageResult {
@@ -106,7 +108,10 @@ async function runClientAgent(params: SendMessageParams): Promise<SendMessageRes
 
   report("retrieving")
 
-  const stream = await graph.stream(initialState, { streamMode: "updates" })
+  const stream = await graph.stream(initialState, {
+    streamMode: "updates",
+    configurable: { onToken: params.onToken },
+  })
   for await (const update of stream) {
     const nodeName = Object.keys(update)[0] as keyof typeof update
     const nodeUpdate = update[nodeName] as Partial<RAGState> | undefined

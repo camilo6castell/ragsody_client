@@ -111,6 +111,9 @@ export function ChatView() {
     addMessage(conversation.id, userMsg);
     addMessage(conversation.id, pendingMsg);
 
+    let tokenBuffer = "";
+    let tokenRafId: number | null = null;
+
     const baseParams = {
       question: text,
       collections: conversation.activeCollections,
@@ -127,12 +130,33 @@ export function ChatView() {
       onStatus: (update: AgentStatusUpdate) => {
         updateMessage(conversation.id, assistantId, {
           pendingPhase: update.phase,
+          ...(update.phase === "correcting" ? { content: "" } : {}),
         });
         if (update.reformulatedQuestion) {
           updateMessage(conversation.id, userMsg.id, {
             reformulatedQuestion: update.reformulatedQuestion,
           });
         }
+      },
+      // Streamed answer tokens, batched per animation frame so a long answer
+      // doesn't trigger a zustand/React update for every token.
+      onToken: (token: string) => {
+        tokenBuffer += token;
+        if (tokenRafId !== null) return;
+        tokenRafId = requestAnimationFrame(() => {
+          tokenRafId = null;
+          const pending = tokenBuffer;
+          tokenBuffer = "";
+          if (!pending) return;
+          const msgs =
+            useConversationsStore.getState().conversations.find(
+              (c) => c.id === conversation.id,
+            )?.messages ?? [];
+          const current = msgs.find((m) => m.id === assistantId);
+          updateMessage(conversation.id, assistantId, {
+            content: (current?.content ?? "") + pending,
+          });
+        });
       },
       // Demo-mode attachments + credentials: the attached files' content goes
       // with the next query straight to Gemini (never to any backend). `demo`

@@ -47,7 +47,7 @@ export function PendingStatus({
 }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-5">
-      <ThinkingOrb state="composing" size={64} speed={1.25} />
+      <ThinkingOrb state="composing" size={20} speed={1.25} />
       <span className="flex min-w-0 items-center gap-3">
         {phase ? (
           <StatusTicker status={phase} />
