@@ -84,12 +84,21 @@ export function ResponseModeSection({
 
   const agentConfigured = hasFullAgentConfig()
   const agentActive = !DEMO_MODE && conversation.useAgent && agentConfigured
-  // In backend mode the server decides the model, so the override only
-  // applies to the in-browser agent.
-  const modelOverride = agentActive ? conversation.generation.model : null
-  const { backend: genBackend, model: genModel } = effectiveGenerateModel(modelOverride)
-  const supportsThinkMode = getModelSupports(genBackend, genModel).has("think_mode")
-  const effectiveThink = conversation.generation.thinkMode ?? getModelDefaultThink(genBackend, genModel) ?? false
+  // In demo mode the LLM is Gemini (the visitor's own key+model from the
+  // onboarding modal) -- the .env role config (VITE_LLM_ROL_*) is never
+  // read, so those vars may not exist at all. Skip the provider lookup:
+  // effectiveGenerateModel()/getModelSupports() throw when they're missing,
+  // which would crash the sidebar on every open conversation.
+  let supportsThinkMode = false
+  let effectiveThink = false
+  if (!DEMO_MODE) {
+    // In backend mode the server decides the model, so the override only
+    // applies to the in-browser agent.
+    const modelOverride = agentActive ? conversation.generation.model : null
+    const { backend: genBackend, model: genModel } = effectiveGenerateModel(modelOverride)
+    supportsThinkMode = getModelSupports(genBackend, genModel).has("think_mode")
+    effectiveThink = conversation.generation.thinkMode ?? getModelDefaultThink(genBackend, genModel) ?? false
+  }
 
   const modelsByBackend = new Map<string, string[]>()
   for (const { backend, model } of listModels()) {
