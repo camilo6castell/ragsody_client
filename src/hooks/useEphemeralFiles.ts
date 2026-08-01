@@ -23,7 +23,15 @@ export function useEphemeralFiles(conversationId: string | null) {
   const upload = useMutation({
     mutationFn: (params: { file: File; attachToCollection: boolean; collection?: string }) =>
       uploadFile({ ...params, conversationId: conversationId! }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey })
+      // Attaching to a persisted collection creates/updates a "System
+      // collection" -- refresh the picker so it shows up immediately
+      // instead of after the 30s staleTime of useCollections.
+      if (variables.attachToCollection) {
+        queryClient.invalidateQueries({ queryKey: ["collections"] })
+      }
+    },
   })
 
   const remove = useMutation({
