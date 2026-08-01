@@ -5,6 +5,9 @@ React frontend for RAGsody, a local RAG chat over locally-indexed document colle
 ## Features
 
 - **Chat UI** with markdown rendering, syntax highlighting, file attachments, and streaming responses.
+- **File context** per conversation (right sidebar), two flavors:
+  - *Attachments*: plain-text files (500 KB limit) sent whole with your next message and consumed afterwards — single-use, no indexing.
+  - *Ephemeral collections*: files chunked + embedded into an in-memory collection scoped to this conversation, or persisted on the server into a `namespace/collection` when you enable *Attach to permanent collection*.
 - **Two response modes**:
   - *Agent mode*: an in-browser LangGraph pipeline (retrieve → evaluate → reformulate on low confidence → generate → review/correct) orchestrated through the MCP server (`/mcp`), including live web search (`search_web` tool) and a Think button.
   - *Backend mode*: delegates the whole query to the server's RAG pipeline; the server decides which model to use.
@@ -40,7 +43,7 @@ The Vite dev server runs on http://localhost:5173. Point `VITE_API_BASE_URL` at 
 ```
 src/
   components/
-    chat/        Chat view: ChatView, MessageList/Bubble, MessageInput, ResponseModeSection, ...
+    chat/        Chat view: ChatView, MessageList/Bubble, MessageInput, AttachmentsSection, FilesSection, ...
     layout/      App shell (sidebar, panels)
     ui/          Reusable primitives (select, switch, buttons, ...)
   config/models/ Frontend model registry: models.json + per-backend files, listModels()
