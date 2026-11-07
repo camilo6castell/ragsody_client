@@ -301,9 +301,9 @@ export interface LLMOptions {
   /** When set, the LLM call is streamed and every content delta is emitted. */
   onToken?: (delta: string) => void
   /**
-   * Override "backend,model" que reemplaza al rol del .env para esta
-   * llamada (usado por el agente cuando el usuario elige un modelo
-   * explícito en el dropdown de Model).
+   * Override "backend,model" that replaces the .env role for this call
+   * (used by the agent when the user selects an explicit model from the
+   * Model dropdown).
    */
   override?: string | null
 }

@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react"
 
 /**
- * Estado de conectividad del navegador (online/offline). Deliberadamente
- * NO hace ping al backend -- eso implicaría un endpoint/comportamiento
- * nuevo del lado del servidor, y la restricción del pedido es cero
- * cambios de integración. navigator.onLine + los eventos del browser
- * son suficientes para la señal que le importa al usuario: "¿tengo
- * salida a internet ahora mismo?".
+ * Browser connectivity state (online/offline). Deliberately does NOT ping
+ * the backend -- that would require a new endpoint/behavior on the server
+ * side, and the constraint for this task is zero integration changes.
+ * navigator.onLine + browser events are enough for the signal the user
+ * cares about: "do I have internet access right now?".
  */
 export function useOnlineStatus(): boolean {
   const [online, setOnline] = useState(() =>

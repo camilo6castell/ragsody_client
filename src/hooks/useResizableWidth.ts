@@ -6,18 +6,18 @@ interface UseResizableWidthOptions {
   min: number
   max: number
   /**
-   * +1 si arrastrar el mouse hacia la DERECHA debe agrandar el panel
-   * (caso: handle en el borde derecho de un panel a la izquierda).
-   * -1 si arrastrar hacia la IZQUIERDA debe agrandarlo (caso: handle en
-   * el borde izquierdo de un panel a la derecha).
+   * +1 if dragging the mouse to the RIGHT should enlarge the panel
+   * (case: handle on the right edge of a panel on the left).
+   * -1 if dragging to the LEFT should enlarge it (case: handle on the
+   * left edge of a panel on the right).
    */
   growDirection: 1 | -1
 }
 
 /**
- * Devuelve un onPointerDown para poner en el elemento "handle". Usa
- * setPointerCapture para que el arrastre siga funcionando aunque el
- * cursor se salga del handle durante el drag (arrastres rápidos).
+ * Returns an onPointerDown handler to attach to the "handle" element.
+ * It uses setPointerCapture so dragging keeps working even when the
+ * cursor leaves the handle during the drag (fast drags).
  */
 export function useResizableWidth({
   width,

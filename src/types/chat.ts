@@ -7,21 +7,21 @@ export interface ChatMessage {
   role: "user" | "assistant"
   content: string
   createdAt: number
-  /** Solo en mensajes assistant exitosos. */
+  /** Only on successful assistant messages. */
   confidence?: number
   collectionsUsed?: string[]
   reformulated?: boolean
-  /** True si el mensaje assistant en realidad muestra un error (4xx/5xx). */
+  /** True if the assistant message is actually displaying an error (4xx/5xx). */
   isError?: boolean
-  /** True mientras se espera la respuesta -- placeholder de "pensando...". */
+  /** True while waiting for the response -- placeholder for "thinking...". */
   isPending?: boolean
-  /** Texto junto a los puntos de carga mientras isPending (ej. "Revisando la web..."). */
+  /** Text next to the loading dots while isPending (e.g. "Checking the web..."). */
   pendingLabel?: string
-  /** Etapa actual del agente in-browser mientras isPending (ej. "generating"). */
+  /** Current in-browser agent stage while isPending (e.g. "generating"). */
   pendingPhase?: string
-  /** Pregunta reformulada por el agente in-browser (chip mientras isPending). */
+  /** Question reformulated by the in-browser agent (chip while isPending). */
   reformulatedQuestion?: string
-  /** Lo que REALMENTE pasó en este mensaje -- ver QueryResponse.used_web_search. */
+  /** What ACTUALLY happened in this message -- see QueryResponse.used_web_search. */
   usedWebSearch?: boolean
   webSources?: WebSource[]
 }
@@ -29,24 +29,23 @@ export interface ChatMessage {
 export interface GenerationOptionsState {
   maxTokens: number | null
   /**
-   * null = "sin override, usar el default que ya está escrito en
-   * _MODELS[model] para el modelo activo" (ver default_think en
-   * ProviderInfo). true/false = override explícito para esta
-   * conversación desde el botón "Pensar".
+   * null = "no override, use the default already written in
+   * _MODELS[model] for the active model" (see default_think in
+   * ProviderInfo). true/false = explicit override for this conversation
+   * from the "Think" button.
    */
   thinkMode: boolean | null
   /**
-   * Modelo activo del agente in-browser, en formato "backend,model"
-   * (ej. "flm,qwen3.5:9b"). null = "built-in": usa los roles de .env
-   * (VITE_LLM_ROL_GENERATE/REFORMULATE/REVIEW). Solo aplica en modo
-   * agent; en modo backend el modelo lo decide el servidor.
+   * Active in-browser agent model, in "backend,model" format
+   * (e.g. "flm,qwen3.5:9b"). null = "built-in": uses the .env roles
+   * (VITE_LLM_ROL_GENERATE/REFORMULATE/REVIEW). Only applies in agent
+   * mode; in backend mode the server decides the model.
    */
   model: string | null
   /**
-   * No hay maxTurns/topKInitial/topKFinal acá: pasaron a ser
-   * exclusivamente configuración de servidor (.env) -- ver
-   * GenerationOptions en src/api/schemas/chat.py. Ningún dato de
-   * conversación los necesita.
+   * There is no maxTurns/topKInitial/topKFinal here: they became
+   * server-only configuration (.env) -- see GenerationOptions in
+   * src/api/schemas/chat.py. No conversation data needs them.
    */
 }
 
@@ -57,9 +56,9 @@ export interface Conversation {
   messages: ChatMessage[]
   activeCollections: string[]
   mode: ChatMode
-  /** Usar /query/agent (grafo con revisión) en vez de /query (lineal). */
+  /** Use /query/agent (graph with review) instead of /query (linear). */
   useAgent: boolean
-  /** Complementar (o reemplazar, sin colecciones) la respuesta con búsqueda web -- ver ResponseModeSection.tsx. */
+  /** Supplement (or replace, with no collections) the answer with web search -- see ResponseModeSection.tsx. */
   useWebSearch: boolean
   generation: GenerationOptionsState
 }

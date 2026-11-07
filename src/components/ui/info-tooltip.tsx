@@ -2,10 +2,10 @@ import { Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
- * Ícono de información con tooltip on-hover, sin depender de un portal
- * (@base-ui/react no trae un Tooltip todavía en este proyecto -- ver
- * components.json). Suficiente para textos cortos de ayuda dentro de
- * paneles con overflow, como ResponseModeSection.
+ * Information icon with an on-hover tooltip, without relying on a portal
+ * (@base-ui/react does not provide a Tooltip in this project yet -- see
+ * components.json). Sufficient for short help texts inside panels with
+ * overflow, such as ResponseModeSection.
  */
 export function InfoTooltip({ text, className }: { text: string; className?: string }) {
   return (

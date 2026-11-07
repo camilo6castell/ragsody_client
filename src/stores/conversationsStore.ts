@@ -23,7 +23,7 @@ function makeConversation(): Conversation {
   }
 }
 
-/** ChatGPT/Claude-style: el título sale del primer mensaje del usuario. */
+/** ChatGPT/Claude-style: the title comes from the user's first message. */
 function titleFromMessage(content: string): string {
   const trimmed = content.trim().replace(/\s+/g, " ")
   return trimmed.length > 48 ? `${trimmed.slice(0, 48)}…` : trimmed || "New conversation"
@@ -33,14 +33,13 @@ interface ConversationsState {
   conversations: Conversation[]
   activeId: string | null
   /**
-   * Global (no por-conversación): se agotó la cuota de la cuenta de
-   * Tavily -- ver isWebSearchQuotaExceededError en lib/api/client.ts.
-   * A diferencia de useWebSearch (por conversación), esto refleja un
-   * estado de LA CUENTA de Tavily, no una preferencia del chat, así que
-   * aplica a todas las conversaciones por igual hasta que el usuario lo
-   * reinicie manualmente (ver resetWebSearchQuotaExceeded en
-   * ResponseModeSection.tsx) -- ej. después de actualizar el plan o al
-   * empezar un nuevo mes de facturación.
+   * Global (not per-conversation): the Tavily account quota ran out --
+   * see isWebSearchQuotaExceededError in lib/api/client.ts.
+   * Unlike useWebSearch (per conversation), this reflects a state of the
+   * Tavily ACCOUNT, not a chat preference, so it applies to every
+   * conversation equally until the user resets it manually (see
+   * resetWebSearchQuotaExceeded in ResponseModeSection.tsx) -- e.g. after
+   * upgrading the plan or when a new billing month starts.
    */
   webSearchQuotaExceeded: boolean
 
@@ -84,7 +83,7 @@ export const useConversationsStore = create<ConversationsState>()(
       renameConversation: (id, title) =>
         set((s) => {
           const trimmed = title.trim()
-          if (!trimmed) return s // título vacío: no pisa el título existente
+          if (!trimmed) return s // empty title: do not overwrite the existing title
           return {
             conversations: s.conversations.map((c) =>
               c.id === id ? { ...c, title: trimmed } : c
@@ -163,12 +162,12 @@ export const useConversationsStore = create<ConversationsState>()(
     }),
     {
       name: "ragsody-conversations",
-      // Conversaciones guardadas en localStorage ANTES de agregar
-      // useWebSearch no tienen ese campo -- sin este merge, quedarían en
-      // `undefined` en vez de `false` (Conversation lo declara como
-      // boolean no-opcional, pero persist rehidrata sin pasar por el
-      // type-checker). undefined se comporta como falsy en casi todos
-      // lados, pero mejor no depender de eso.
+      // Conversations saved to localStorage BEFORE useWebSearch was added
+      // do not have that field -- without this merge they would remain
+      // `undefined` instead of `false` (Conversation declares it as a
+      // non-optional boolean, but persist rehydrates without going through
+      // the type-checker). undefined behaves as falsy in most places, but
+      // it is better not to rely on that.
       merge: (persistedState, currentState) => {
         const persisted = persistedState as ConversationsState | undefined
         if (!persisted) return currentState

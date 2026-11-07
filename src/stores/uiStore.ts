@@ -9,11 +9,11 @@ export const SIDEBAR_COLLAPSED_WIDTH = 56
 export type Theme = "light" | "dark" | "system"
 
 /**
- * Aplica la clase `.dark` al <html> según el theme elegido (resolviendo
- * "system" contra prefers-color-scheme). Se llama desde el store cada
- * vez que cambia el theme, y una vez al boot desde main.tsx -- ver ahí
- * por qué el boot no puede depender solo de la hidratación de zustand
- * (causaría un flash del tema equivocado).
+ * Applies the `.dark` class to <html> according to the selected theme
+ * (resolving "system" against prefers-color-scheme). Called from the store
+ * every time the theme changes, and once at boot from main.tsx -- see there
+ * why boot cannot depend only on zustand hydration (it would cause a flash
+ * of the wrong theme).
  */
 export function applyTheme(theme: Theme) {
   const isDark =
@@ -29,13 +29,12 @@ interface UiState {
   rightCollapsed: boolean
   theme: Theme
   /**
-   * Estado de los drawers en mobile (< lg): independiente de
-   * leftCollapsed/rightCollapsed, que son un concepto de desktop (rail
-   * de íconos vs. panel ancho). En mobile cada sidebar es un overlay a
-   * pantalla completa que está abierto o cerrado, nunca "colapsado" --
-   * ver SidebarShell.tsx. Deliberadamente NO persistido (ver
-   * partialize abajo): reabrir la app en el celular siempre debe
-   * arrancar con los drawers cerrados.
+   * State of the mobile drawers (< lg): independent of
+   * leftCollapsed/rightCollapsed, which are a desktop concept (icon rail
+   * vs. wide panel). On mobile each sidebar is a full-screen overlay that
+   * is either open or closed, never "collapsed" -- see SidebarShell.tsx.
+   * Deliberately NOT persisted (see partialize below): reopening the app
+   * on a phone should always start with the drawers closed.
    */
   leftMobileOpen: boolean
   rightMobileOpen: boolean
@@ -66,8 +65,8 @@ export const useUiStore = create<UiState>()(
       setRightWidth: (width) => set({ rightWidth: width }),
       toggleRightCollapsed: () => set((s) => ({ rightCollapsed: !s.rightCollapsed })),
       setTheme: (theme) => {
-        // Transición suave solo para este cambio explícito (no en el
-        // boot, para no animar el flash inicial -- ver main.tsx).
+        // Smooth transition only for this explicit change (not at boot,
+        // so the initial flash is not animated -- see main.tsx).
         document.documentElement.classList.add("theme-transition")
         applyTheme(theme)
         set({ theme })
@@ -75,16 +74,16 @@ export const useUiStore = create<UiState>()(
           document.documentElement.classList.remove("theme-transition")
         }, 200)
       },
-      // Solo un drawer mobile a la vez (mismo patrón que apps de chat
-      // de referencia): abrir uno cierra el otro en vez de apilarse.
+      // Only one mobile drawer at a time (same pattern as reference chat
+      // apps): opening one closes the other instead of stacking them.
       openLeftMobile: () => set({ leftMobileOpen: true, rightMobileOpen: false }),
       openRightMobile: () => set({ rightMobileOpen: true, leftMobileOpen: false }),
       closeMobileSidebars: () => set({ leftMobileOpen: false, rightMobileOpen: false }),
     }),
     {
       name: "ragsody-ui",
-      // leftMobileOpen/rightMobileOpen quedan afuera a propósito -- ver
-      // el comentario en la interfaz de arriba.
+      // leftMobileOpen/rightMobileOpen are intentionally left out -- see
+      // the comment on the interface above.
       partialize: (state) => ({
         leftWidth: state.leftWidth,
         leftCollapsed: state.leftCollapsed,

@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react"
 
 /**
- * Boolean reactivo para una media query. Usado para decidir el modo de
- * los sidebars (overlay a pantalla completa en mobile vs. panel
- * estático redimensionable en desktop) -- ver SidebarShell.tsx. No se
- * puede resolver esto solo con clases Tailwind responsive porque el
- * ancho inline (`style={{ width }}`) que ya usa SidebarShell para el
- * resize con mouse ganaría siempre por especificidad sobre una clase
- * `lg:w-*`.
+ * Reactive boolean for a media query. Used to decide how the sidebars
+ * behave (full-screen overlay on mobile vs. a static, resizable panel on
+ * desktop) -- see SidebarShell.tsx. This cannot be solved with Tailwind
+ * responsive classes alone because the inline width (`style={{ width }}`)
+ * that SidebarShell already uses for mouse resizing would always win on
+ * specificity over an `lg:w-*` class.
  */
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() =>
@@ -25,7 +24,7 @@ export function useMediaQuery(query: string): boolean {
   return matches
 }
 
-/** Mismo breakpoint `lg` que usa Tailwind (1024px) para el layout del AppShell. */
+/** Same `lg` breakpoint that Tailwind uses (1024px) for the AppShell layout. */
 export function useIsDesktop(): boolean {
   return useMediaQuery("(min-width: 1024px)")
 }

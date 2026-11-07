@@ -1,14 +1,14 @@
 /**
- * GET /collections devuelve una lista plana "namespace/coleccion"
- * (ver ContextManager.list_all() en el backend). Acá se agrupa por
- * namespace para el picker jerárquico del sidebar -- la selección real
- * sigue viviendo a nivel de hoja (conversation.activeCollections), esto
- * es solo la vista.
+ * GET /collections returns a flat "namespace/collection" list
+ * (see ContextManager.list_all() in the backend). Here it is grouped by
+ * namespace for the sidebar's hierarchical picker -- the actual selection
+ * still lives at the leaf level (conversation.activeCollections); this is
+ * only the view.
  */
 
 export interface CollectionGroup {
   namespace: string
-  items: string[] // nombres completos "namespace/hoja", ya ordenados
+  items: string[] // full names "namespace/leaf", already sorted
 }
 
 export function groupCollections(flat: string[]): CollectionGroup[] {
@@ -40,7 +40,7 @@ export function groupSelectionState(
   return "some"
 }
 
-/** "sociologia/Colombia" -> "Colombia" (nombre de hoja para mostrar). */
+/** "sociologia/Colombia" -> "Colombia" (leaf name to display). */
 export function leafLabel(fullName: string): string {
   const slashIndex = fullName.indexOf("/")
   return slashIndex === -1 ? fullName : fullName.slice(slashIndex + 1)

@@ -217,10 +217,10 @@ export function getMaxTokens(roleName: string): number | null {
 }
 
 // ============================================================
-// Model override (agente in-browser: un modelo para todos los roles)
+// Model override (in-browser agent: one model for all roles)
 // ============================================================
 
-/** Parses "backend,model" (formato de VITE_LLM_ROL_* y del dropdown de Model). */
+/** Parses "backend,model" (format used by VITE_LLM_ROL_* and the Model dropdown). */
 export function parseModelOverride(spec: string): { backend: string; model: string } {
   const parts = spec.split(",")
   if (parts.length !== 2 || !parts[0] || !parts[1]) {
@@ -232,9 +232,9 @@ export function parseModelOverride(spec: string): { backend: string; model: stri
 }
 
 /**
- * Builds a ProviderConfig for an arbitrary backend+model (independiente de
- * los roles del .env). Usado por el agente cuando el usuario selecciona un
- * modelo explícito en el dropdown de Model.
+ * Builds a ProviderConfig for an arbitrary backend+model (independent of
+ * the .env roles). Used by the agent when the user selects an explicit
+ * model from the Model dropdown.
  */
 export function getProviderConfigFor(
   backend: string,
@@ -279,7 +279,7 @@ export function effectiveGenerateModel(
     try {
       return parseModelOverride(override)
     } catch {
-      /* override inválido (datos persistidos viejos): caer al rol del .env */
+      /* invalid override (old persisted data): fall back to the .env role */
     }
   }
   const config = getProviderConfig("generate")

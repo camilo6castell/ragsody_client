@@ -16,15 +16,15 @@ export const api = axios.create({
 })
 
 /**
- * Forma del `detail` cuando el backend necesita comunicar algo más que un
- * mensaje de texto (ver _no_context_detail en src/api/routers/chat.py).
- * Por ahora el único caso es "se agotó la cuota de Tavily", pero queda
- * genérico por si aparece otra señal estructurada más adelante.
+ * Shape of `detail` when the backend needs to communicate more than a
+ * text message (see _no_context_detail in src/api/routers/chat.py).
+ * So far the only case is "Tavily's quota ran out", but it remains
+ * generic in case another structured signal appears later.
  */
 interface StructuredErrorDetail {
   message?: string
   web_search_quota_exceeded?: boolean
-  /** Ver ContextLimitExceededDetail en types/api.ts -- mismo `detail`, forma más específica. */
+  /** See ContextLimitExceededDetail in types/api.ts -- same `detail`, more specific shape. */
   error?: string
   estimated_tokens?: number
   limit?: number
@@ -38,11 +38,12 @@ function getDetail(error: unknown): string | StructuredErrorDetail | undefined {
 }
 
 /**
- * Extrae un mensaje legible del `detail` que devuelve FastAPI en 400/404/422
- * (ver HTTPException en los routers) -- si no hay detail estructurado, cae
- * al mensaje genérico de axios/red. También maneja Error planos (no-axios)
- * para el modo demo (ver lib/demo.ts -- askGeminiDemo lanza Error, no pega
- * contra el backend, así que nunca hay un AxiosError que inspeccionar).
+ * Extracts a human-readable message from the `detail` returned by FastAPI
+ * on 400/404/422 (see HTTPException in the routers) -- if there is no
+ * structured detail, falls back to the generic axios/network message.
+ * Also handles plain (non-axios) Errors for demo mode (see lib/demo.ts --
+ * askGeminiDemo throws Error, does not hit the backend, so there is never
+ * an AxiosError to inspect).
  */
 export function apiErrorMessage(error: unknown): string {
   const detail = getDetail(error)
@@ -72,12 +73,12 @@ export function apiErrorMessage(error: unknown): string {
 }
 
 /**
- * True si el error viene de que se agotó la cuota de la cuenta de Tavily
- * (ver web_search_quota_exceeded en el detail estructurado del 422 de
- * _answer_web_only, o en el 200 normal de /query y /query/agent cuando
- * el complemento web falló por esto -- ver QueryResponse.web_search_quota_exceeded).
- * Usado en ChatView.tsx para persistir el flag en el store y que
- * ResponseModeSection.tsx deshabilite el botón "Web".
+ * True if the error comes from the Tavily account quota running out
+ * (see web_search_quota_exceeded in the structured detail of the 422 from
+ * _answer_web_only, or in the normal 200 from /query and /query/agent when
+ * the web supplement failed because of it -- see QueryResponse.web_search_quota_exceeded).
+ * Used in ChatView.tsx to persist the flag in the store so that
+ * ResponseModeSection.tsx disables the "Web" button.
  */
 export function isWebSearchQuotaExceededError(error: unknown): boolean {
   const detail = getDetail(error)
@@ -85,10 +86,10 @@ export function isWebSearchQuotaExceededError(error: unknown): boolean {
 }
 
 /**
- * Detalle del 413 cuando el request no entra en la ventana de contexto
- * del modelo activo (ver check_context_fit en src/llm/context_guard.py).
- * undefined si el error no es de este tipo. Usado en ChatView.tsx para
- * mostrar un banner específico en vez del mensaje genérico de axios.
+ * Detail of the 413 when the request does not fit in the active model's
+ * context window (see check_context_fit in src/llm/context_guard.py).
+ * undefined if the error is not of this type. Used in ChatView.tsx to
+ * show a specific banner instead of the generic axios message.
  */
 export function getContextLimitDetail(error: unknown): ContextLimitExceededDetail | undefined {
   const detail = getDetail(error)
@@ -109,9 +110,9 @@ export async function getCollections(): Promise<CollectionsResponse> {
 }
 
 /**
- * Nombre del modelo que el servidor usa para el rol generate
- * (GET /api/v1/config/providers). Usado por el dropdown de Model en
- * modo backend, donde el modelo lo decide el servidor.
+ * Name of the model the server uses for the generate role
+ * (GET /api/v1/config/providers). Used by the Model dropdown in
+ * backend mode, where the server decides the model.
  */
 export async function getServerGenerationModel(): Promise<string> {
   const { data } = await api.get<ProvidersResponse>("/config/providers")
@@ -173,11 +174,11 @@ export async function deleteEphemeralConversation(
 }
 
 // ---------------------------------------------------------------
-// Archivos adjuntos ad-hoc -- ver src/api/routers/attachments.py.
-// De un solo uso: se consumen en el backend después de una query que
-// los incluyó (ver _consume_attachments en src/api/routers/chat.py),
-// así que la UI los vuelve a listar (queryClient.invalidateQueries)
-// después de cada envío para reflejar que la lista quedó vacía.
+// Ad-hoc attachment files -- see src/api/routers/attachments.py.
+// Single-use: they are consumed in the backend after a query that
+// included them (see _consume_attachments in src/api/routers/chat.py),
+// so the UI lists them again (queryClient.invalidateQueries) after each
+// send to reflect that the list is now empty.
 // ---------------------------------------------------------------
 
 export async function uploadAttachment(params: {

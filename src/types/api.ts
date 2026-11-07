@@ -1,19 +1,19 @@
-// Espejo de src/api/schemas/*.py (backend). Mantener sincronizado a mano
-// -- son dos lenguajes distintos, no hay generación automática todavía.
+// Mirror of src/api/schemas/*.py (backend). Keep in sync by hand --
+// they are two different languages, and there is no automatic generation yet.
 
 export interface GenerationOptions {
   /**
-   * La temperatura NO vive acá: es una propiedad fija de cada modelo,
-   * definida en src/config/models/<backend>.py -- no hay override
-   * por-request ni por-UI para eso (ver docstring del backend).
+   * Temperature does NOT live here: it is a fixed property of each model,
+   * defined in src/config/models/<backend>.py -- there is no per-request
+   * or per-UI override for it (see the backend docstring).
    *
-   * Tampoco viven acá max_turns/top_k_initial/top_k_final: pasaron a
-   * ser exclusivamente configuración de servidor (.env) -- ver
-   * GenerationOptions en src/api/schemas/chat.py.
+   * max_turns/top_k_initial/top_k_final do not live here either: they are
+   * now exclusively server configuration (.env) -- see GenerationOptions
+   * in src/api/schemas/chat.py.
    */
   max_tokens?: number | null
   think_mode?: boolean | null
-  /** Passthrough genérico sin validar en el cliente -- ver GenerationOptions.extra en el backend. */
+  /** Generic passthrough, unvalidated on the client -- see GenerationOptions.extra in the backend. */
   extra?: Record<string, unknown> | null
 }
 
@@ -26,7 +26,7 @@ export interface QueryRequest {
   chat_history: { user: string; assistant: string }[]
   conversation_id?: string | null
   generation?: GenerationOptions | null
-  /** Ver QueryRequest.web_search en el backend: complementa o reemplaza el contexto local. */
+  /** See QueryRequest.web_search in the backend: it supplements or replaces the local context. */
   web_search?: boolean
 }
 
@@ -40,10 +40,10 @@ export interface QueryResponse {
   confidence: number
   collections_used: string[]
   reformulated: boolean
-  /** Lo que REALMENTE pasó, no lo que se pidió -- ver QueryResponse.used_web_search en el backend. */
+  /** What ACTUALLY happened, not what was requested -- see QueryResponse.used_web_search in the backend. */
   used_web_search: boolean
   web_sources: WebSource[] | null
-  /** Se agotó la cuota de la cuenta de Tavily -- ver QueryResponse.web_search_quota_exceeded. */
+  /** The Tavily account quota ran out -- see QueryResponse.web_search_quota_exceeded. */
   web_search_quota_exceeded: boolean
 }
 
@@ -56,15 +56,15 @@ export interface ProviderInfo {
   model: string
   supports: string[]
   /**
-   * Valor de thinking ya escrito en _MODELS[model] para este modelo --
-   * null si el modelo no tiene modo de razonamiento (en ese caso
-   * "think_mode" tampoco aparece en `supports`). El botón "Pensar" de
-   * ResponseModeSection arranca reflejando esto, no un false fijo.
+   * Thinking value already written in _MODELS[model] for this model --
+   * null if the model has no reasoning mode (in that case "think_mode"
+   * does not appear in `supports` either). The "Think" button in
+   * ResponseModeSection starts by reflecting this, not a fixed false.
    */
   default_think: boolean | null
-  /** Ventana de contexto máximo del modelo (tokens de entrada). */
+  /** Maximum context window of the model (input tokens). */
   context_window: number | null
-  /** Máximo de tokens de salida configurado por defecto. */
+  /** Maximum output tokens configured by default. */
   max_tokens: number | null
 }
 
@@ -98,9 +98,9 @@ export interface DeleteResponse {
 }
 
 // ---------------------------------------------------------------
-// Archivos adjuntos ad-hoc -- espejo de src/api/schemas/attachments.py
-// (AttachmentInfo se re-exporta ahí desde src/context/attachments.py,
-// mismo patrón que EphemeralFileInfo/src/context/ephemeral.py).
+// Ad-hoc attachment files -- mirror of src/api/schemas/attachments.py
+// (AttachmentInfo is re-exported there from src/context/attachments.py,
+// same pattern as EphemeralFileInfo/src/context/ephemeral.py).
 // ---------------------------------------------------------------
 
 export interface AttachmentInfo {
@@ -115,11 +115,13 @@ export interface AttachmentsResponse {
 }
 
 /**
- * Forma del `detail` de un 413 -- ver ContextLimitExceeded.as_detail()
- * en src/llm/context_guard.py. Devuelto tanto por /query, /query/agent
- * como por /query cuando cae en el caso sin colecciones/efímeros/web_search (mismo guard reutilizado en los tres casos, ver check_context_fit en src/llm/context_guard.py).
+ * Shape of the `detail` of a 413 -- see ContextLimitExceeded.as_detail()
+ * in src/llm/context_guard.py. Returned by /query and /query/agent, and
+ * also by /query when it falls into the no-collections/ephemeral/web_search
+ * case (same guard reused in all three cases, see check_context_fit in
+ * src/llm/context_guard.py).
  */
-/** Espejo de src/api/schemas/demo.py -- enviado a POST /api/v1/demo/query. */
+/** Mirror of src/api/schemas/demo.py -- sent to POST /api/v1/demo/query. */
 export interface DemoQueryRequest {
   question: string
   collections: string[]

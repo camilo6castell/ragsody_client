@@ -6,10 +6,10 @@ import App from "./App.tsx"
 import "./index.css"
 import { applyTheme, type Theme } from "./stores/uiStore"
 
-// Aplica el theme persistido (o "system" si es la primera visita) ANTES
-// del primer render, leyendo directo de localStorage en vez de esperar
-// a que zustand/persist hidrate -- si no, hay un flash del tema
-// contrario mientras React monta. Misma key que uiStore ("ragsody-ui").
+// Apply the persisted theme (or "system" on the first visit) BEFORE the
+// first render, reading directly from localStorage instead of waiting
+// for zustand/persist to hydrate -- otherwise there is a flash of the
+// wrong theme while React mounts. Same key as uiStore ("ragsody-ui").
 try {
   const raw = localStorage.getItem("ragsody-ui")
   const theme: Theme = raw ? (JSON.parse(raw).state?.theme ?? "system") : "system"

@@ -195,7 +195,7 @@ export async function verifyGeminiModel(
 }
 
 /**
- * Calls the streaming demo endpoint (POST /api/v1/demo/query — Fase 2).
+ * Calls the streaming demo endpoint (POST /api/v1/demo/query — Phase 2).
  * Uses read() on the response body for SSE-compatible streaming.
  * onDone is only called once (on [DONE]).
  * onError is called once on any error; onDone will NOT follow.

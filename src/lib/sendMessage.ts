@@ -82,7 +82,7 @@ export function resetModeCache(): void {
 }
 
 // ============================================================
-// Client-side LangGraph agent (Fase 7)
+// Client-side LangGraph agent (Phase 7)
 // ============================================================
 
 async function runClientAgent(params: SendMessageParams): Promise<SendMessageResult> {

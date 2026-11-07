@@ -2,10 +2,10 @@ import { useEffect } from "react"
 import { applyTheme, useUiStore } from "@/stores/uiStore"
 
 /**
- * Con theme === "system", si el usuario cambia el tema del SO mientras
- * la app está abierta, esto lo refleja sin necesitar un refresh.
- * Con "light"/"dark" explícitos no hace nada (ya está aplicado por
- * setTheme/el boot de main.tsx).
+ * When theme === "system", if the user changes the OS theme while the
+ * app is open, this reflects it without requiring a refresh.
+ * With explicit "light"/"dark" it does nothing (already applied by
+ * setTheme/the boot logic in main.tsx).
  */
 export function useThemeSync() {
   const theme = useUiStore((s) => s.theme)

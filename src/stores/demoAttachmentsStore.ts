@@ -51,16 +51,16 @@ export const useDemoAttachmentsStore = create<DemoAttachmentsState>()((set) => (
     })),
 }))
 
-// Referencia estable para "sin archivos". Un selector que devuelve `[]`
-// (literal nuevo) cuando no hay entrada todavía crea un array DISTINTO
-// en cada render; con la comparación por referencia de Zustand
-// (Object.is), eso se lee como "cambió" en cada ciclo -> setState ->
-// re-render -> el selector corre de nuevo -> nuevo array -> loop
-// infinito ("Maximum update depth exceeded"). Devolver siempre la MISMA
-// referencia cuando no hay archivos rompe el loop.
+// Stable reference for "no files". A selector that returns `[]`
+// (a new literal) when there is no entry yet creates a DIFFERENT array
+// on every render; with Zustand's reference comparison (Object.is), that
+// reads as "changed" on every cycle -> setState -> re-render -> the
+// selector runs again -> new array -> infinite loop ("Maximum update
+// depth exceeded"). Always returning the SAME reference when there are
+// no files breaks the loop.
 const EMPTY_FILES: DemoAttachment[] = []
 
-/** Selector estable para usar con useDemoAttachmentsStore(selectDemoFiles(conversationId)). */
+/** Stable selector for use with useDemoAttachmentsStore(selectDemoFiles(conversationId)). */
 export function selectDemoFiles(conversationId: string | null) {
   return (s: DemoAttachmentsState): DemoAttachment[] =>
     conversationId ? (s.filesByConversation[conversationId] ?? EMPTY_FILES) : EMPTY_FILES

@@ -14,21 +14,21 @@ import type { DemoAttachment } from "@/stores/demoAttachmentsStore"
 const MAX_FILE_BYTES = 512_000
 
 /**
- * Adjuntos ad-hoc de una conversación -- ver src/context/attachments.py
- * en el backend. Mismo patrón que useEphemeralFiles.ts, pero contra
- * /api/v1/attachments: acá no hay attachToCollection/collection porque
- * los adjuntos nunca se indexan, solo se inyectan enteros como texto en
- * la próxima query y se consumen automáticamente después de enviarla
- * (ver _consume_attachments en src/api/routers/chat.py) -- por eso
- * ChatView.tsx invalida esta query después de cada envío exitoso.
+ * Ad-hoc attachments for a conversation -- see src/context/attachments.py
+ * in the backend. Same pattern as useEphemeralFiles.ts, but against
+ * /api/v1/attachments: there is no attachToCollection/collection here
+ * because attachments are never indexed; they are injected whole as text
+ * into the next query and consumed automatically after it is sent
+ * (see _consume_attachments in src/api/routers/chat.py) -- that is why
+ * ChatView.tsx invalidates this query after every successful send.
  *
- * En VITE_DEMO_MODE, no hay backend al que subir nada: useDemoAttachments
- * más abajo reimplementa el mismo contrato (data.files, upload.mutate,
- * remove.mutate) leyendo el archivo con FileReader y guardándolo en
- * memoria (useDemoAttachmentsStore) -- ver lib/demo.ts para el porqué.
- * Como nunca se indexaban (siempre fue texto crudo inyectado en el
- * prompt), esto es funcionalmente equivalente, solo que el "backend" es
- * la pestaña del navegador.
+ * In VITE_DEMO_MODE there is no backend to upload anything to:
+ * useDemoAttachments below reimplements the same contract (data.files,
+ * upload.mutate, remove.mutate) by reading the file with FileReader and
+ * storing it in memory (useDemoAttachmentsStore) -- see lib/demo.ts for
+ * why. Since attachments were never indexed (they were always raw text
+ * injected into the prompt), this is functionally equivalent; the only
+ * difference is that the "backend" is the browser tab.
  */
 function useRealAttachments(conversationId: string | null) {
   const queryClient = useQueryClient()
@@ -134,9 +134,10 @@ function useDemoAttachments(conversationId: string | null) {
 }
 
 export function useAttachments(conversationId: string | null) {
-  // DEMO_MODE es una constante de build time (import.meta.env), nunca
-  // cambia entre renders para una misma build -- por eso ramificar acá
-  // qué hook llamar es seguro pese a que parezca romper rules-of-hooks.
+  // DEMO_MODE is a build-time constant (import.meta.env), so it never
+  // changes between renders for a given build -- branching here to decide
+  // which hook to call is therefore safe, even though it looks like it
+  // violates the rules of hooks.
   // eslint-disable-next-line react-hooks/rules-of-hooks
   return DEMO_MODE ? useDemoAttachments(conversationId) : useRealAttachments(conversationId)
 }
