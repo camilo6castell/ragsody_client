@@ -1,12 +1,28 @@
 {
-  "name": "ui",
+  "name": "ragsody-client",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "React frontend for Ragsody, a local-first RAG chat over locally indexed document collections.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camilo6castell/ragsody_client.git"
+  },
+  "homepage": "https://ragsody.vercel.app",
+  "bugs": {
+    "url": "https://github.com/camilo6castell/ragsody_client/issues"
+  },
+  "packageManager": "pnpm@12.17.0",
+  "engines": {
+    "node": ">=24"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -50,6 +66,7 @@
     "globals": "^17.7.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vitest": "5.1.0"
   }
 }

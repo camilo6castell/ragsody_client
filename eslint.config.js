@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'coverage', '.agents']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -27,9 +27,9 @@ export default defineConfig([
   },
   {
     // shadcn/ui primitives conventionally export the component together
-    // with its `cva` variants (ej. `export { Button, buttonVariants }`) --
-    // rompe react-refresh/only-export-components, pero es el patrón
-    // estándar del registry, no vale la pena pelear contra él acá.
+    // with its `cva` variants (e.g. `export { Button, buttonVariants }`) --
+    // this breaks react-refresh/only-export-components, but it is the
+    // registry's standard pattern, so it is not worth fighting here.
     files: ['src/components/ui/**/*.{ts,tsx}'],
     rules: {
       'react-refresh/only-export-components': 'off',

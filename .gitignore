@@ -7,13 +7,35 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies and build output
 node_modules
 dist
 dist-ssr
+coverage
 *.local
 
 # Mine
 doc/
+
+# Environment and secrets -- never commit real values
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+.netrc
+.pypirc
+
+# Local data and generated vector indexes
+uploads/
+*.sqlite
+*.sqlite3
+*.db
+vectorstore/
+vectorstores/
 
 # Editor directories and files
 .vscode/*
@@ -25,5 +47,3 @@ doc/
 *.njsproj
 *.sln
 *.sw?
-dist
-.env
